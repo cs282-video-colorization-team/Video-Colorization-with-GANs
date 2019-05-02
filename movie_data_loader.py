@@ -11,7 +11,7 @@ class Movie(Dataset):
         mode: train or test
         cls_list: 'all' or list of classes, e.g. ['Drama','Horror',...]
         '''
-        self.IMAGE_SIZE = 640, 360
+        # self.IMAGE_SIZE = 640, 360
         self.image_path = image_path
         self.transform_color = transform_color
         self.transform_gray = transform_gray
@@ -25,12 +25,14 @@ class Movie(Dataset):
     def __getitem__(self, index):
 
         image = Image.open(os.path.join(self.image_path + self.data_files_name[index]))
-        image.thumbnail(self.IMAGE_SIZE)
+        print(self.image_path, self.data_files_name[index], index)
+        # image.thumbnail(self.IMAGE_SIZE)
+        print(image.size)
         #print (image, os.path.join(self.image_path + self.data_files_name[index]))
 
         if self.mode == 'train':
             return self.transform_gray(image), self.transform_color(image)
-        if self.mode == 'val':
+        elif self.mode == 'val':
             return self.transform_gray(image), self.transform_color(image)
         elif self.mode == 'test':
             return self.transform_gray(image)

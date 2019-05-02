@@ -114,7 +114,7 @@ def main():
                              batch_size=args.batch_size,
                              large=args.large,
                              mode='train',
-                             num_workers=4,
+                             num_workers=0,
                             )
 
     # data_val = myDataset(os.path.join(data_root, 'val/'), 
@@ -125,7 +125,7 @@ def main():
                             batch_size=args.batch_size,
                             large=args.large,
                             mode='val',
-                            num_workers=4,
+                            num_workers=0,
                             )
     # val_loader = (data_val,
     #                             batch_size=args.batch_size,
