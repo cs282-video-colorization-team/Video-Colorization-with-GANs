@@ -325,8 +325,8 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
         errorG.update(errG, target.size(0), history=1)
         errorD.update(errD, target.size(0), history=1)
 
-        # if i == 0:
-        #     vis_result(data.data, target.data, fake.data, epoch)
+        if i == 0:
+            vis_result(data.data, target.data, fake.data, epoch)
 
         if i % 50 == 0:
             print('Validating Epoch %d: [%d/%d]' \
