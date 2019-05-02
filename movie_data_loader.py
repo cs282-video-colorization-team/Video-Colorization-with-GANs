@@ -52,6 +52,22 @@ class MovieTime(Dataset):
 
     def __getitem__(self, index):
 
+        now_file_name = self.data_files_name[index]
+
+        timestamp = int(now_file_name.split('.')[0])
+
+        if timestamp > 0:
+            prev_timestamp_str = str(timestamp - 1)
+            prev_file_name = '0' * (5-len(prev_timestamp_str)) + prev_timestamp_str + '.png'
+
+        if timestamp < len(self.data_files_name) - 1:
+            next_timestamp_str = str(timestamp + 1)
+            next_file_name = '0' * (5-len(next_timestamp_str)) + next_timestamp_str + '.png'
+
+
+        prev_file_name = self.data_files_name[index]
+        next_file_name = self.data_files_name[index]
+
         image = Image.open(os.path.join(self.image_path + self.data_files_name[index]))
         image = image.resize(self.IMAGE_RESIZE)
 
