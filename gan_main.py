@@ -57,7 +57,7 @@ parser.add_argument('--gpu', default=0, type=int,
 def main():
     global args, date
     args = parser.parse_args()
-    date = '1220'
+    date = '0502'
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
@@ -114,7 +114,7 @@ def main():
                              batch_size=args.batch_size,
                              large=args.large,
                              mode='train',
-                             num_workers=0,
+                             num_workers=4,
                             )
 
     # data_val = myDataset(os.path.join(data_root, 'val/'), 
@@ -125,7 +125,7 @@ def main():
                             batch_size=args.batch_size,
                             large=args.large,
                             mode='val',
-                            num_workers=0,
+                            num_workers=4,
                             )
     # val_loader = (data_val,
     #                             batch_size=args.batch_size,

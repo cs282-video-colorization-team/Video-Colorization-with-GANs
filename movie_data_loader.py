@@ -25,9 +25,8 @@ class Movie(Dataset):
     def __getitem__(self, index):
 
         image = Image.open(os.path.join(self.image_path + self.data_files_name[index]))
-        print(self.image_path, self.data_files_name[index], index)
         # image.thumbnail(self.IMAGE_SIZE)
-        print(image.size)
+        image = image.resize((224, 224))
         #print (image, os.path.join(self.image_path + self.data_files_name[index]))
 
         if self.mode == 'train':
