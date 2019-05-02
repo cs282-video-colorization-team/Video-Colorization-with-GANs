@@ -1,3 +1,6 @@
+<<<<<<< HEAD
+# Video-Colorization-with-GANs
+
 # Image Colorization using GANs
 
 [See project report](asset/image-colorization-deep.pdf)
@@ -99,3 +102,6 @@ Conference on Computer Vision and Pattern Recognition,
 volume 2, pages 1447–1454, 2006.
 
 * Q. Fu, W.-T Hsu, M.-H Yang. Colorization Using ConvNet and GAN. Stanford cs231n report: http://cs231n.stanford.edu/reports/2017/pdfs/302.pdf.
+=======
+# Video-Colorization-with-GANs
+>>>>>>> a781fb99bea85dbb35035fa2f082399462ab8eb5
