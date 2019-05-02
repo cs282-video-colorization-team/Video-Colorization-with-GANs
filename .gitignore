@@ -1,0 +1,12 @@
+__pychache__/
+*.pyc
+
+# custom
+img/*
+model/*
+!img/readme.md
+!model/readme.md
+venv/
+dataset/
+.DS_Store
+
