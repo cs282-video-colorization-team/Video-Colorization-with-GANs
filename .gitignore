@@ -9,4 +9,5 @@ model/*
 venv/
 dataset/
 .DS_Store
+train.sh
 

@@ -6,12 +6,15 @@ from torch.utils.data import Dataset
 from PIL import Image
 
 class Movie(Dataset):
-    def __init__(self, image_path, transform_color, transform_gray, mode):
+    def __init__(self, image_path, large, transform_color, transform_gray, mode):
         '''
         mode: train or test
         cls_list: 'all' or list of classes, e.g. ['Drama','Horror',...]
         '''
-        # self.IMAGE_SIZE = 640, 360
+        if large:
+            self.IMAGE_SIZE = (480, 480)
+        else:
+            self.IMAGE_SIZE = (224, 224)
         self.image_path = image_path
         self.transform_color = transform_color
         self.transform_gray = transform_gray
@@ -26,7 +29,7 @@ class Movie(Dataset):
 
         image = Image.open(os.path.join(self.image_path + self.data_files_name[index]))
         # image.thumbnail(self.IMAGE_SIZE)
-        image = image.resize((224, 224))
+        image = image.resize(self.IMAGE_SIZE)
         #print (image, os.path.join(self.image_path + self.data_files_name[index]))
 
         if self.mode == 'train':
@@ -83,27 +86,27 @@ class MovieTime(Dataset):
 
 
 def get_loader(image_path, batch_size=16, large=True, mode='train', num_workers=1):
-    if large:
-        crop = transforms.CenterCrop(480)
-    else:
-        crop = transforms.CenterCrop(224)
+    # if large:
+    #     crop = transforms.CenterCrop(480)
+    # else:
+    #     crop = transforms.CenterCrop(224)
     transform_gray = []
     transform_gray.append(transforms.Grayscale())
-    transform_gray.append(crop)
+    # transform_gray.append(crop)
     transform_gray.append(transforms.ToTensor())
-    #transform_gray.append(transforms.Normalize(mean=(0.5), std=(0.5)))
+    transform_gray.append(transforms.Normalize(mean=[0.5], std=[0.5]))
     transform_gray = transforms.Compose(transform_gray)
 
     if mode == 'train' or mode == 'val':
         transform_color = []
-        transform_color.append(crop)
+        # transform_color.append(crop)
         transform_color.append(transforms.ToTensor())
         transform_color.append(transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)))
         transform_color = transforms.Compose(transform_color)
     else:
         transform_color = None
 
-    dataset = Movie(image_path, transform_color, transform_gray, mode)
+    dataset = Movie(image_path, large, transform_color, transform_gray, mode)
 
     data_loader = data.DataLoader(dataset=dataset,
                                   batch_size=batch_size,
