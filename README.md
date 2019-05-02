@@ -1,7 +1,4 @@
-<<<<<<< HEAD
 # Video-Colorization-with-GANs
-
-# Image Colorization using GANs
 
 [See project report](asset/image-colorization-deep.pdf)
 
