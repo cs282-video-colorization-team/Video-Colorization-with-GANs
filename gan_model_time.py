@@ -52,9 +52,9 @@ class ConvGenTime(nn.Module):
         self.bn9 = nn.BatchNorm2d(ngf)
         self.relu9 = nn.ReLU()
 
-        self.deconv10 = nn.ConvTranspose2d(ngf, 3, 3, stride=2, padding=1, output_padding=1, bias=False)
-        self.bn10 = nn.BatchNorm2d(3)
-        self.relu10 = nn.ReLU()
+        self.deconvRGB = nn.ConvTranspose2d(ngf, 3, 3, stride=2, padding=1, output_padding=1, bias=False)
+
+        self.deconvLAB = nn.ConvTranspose2d(ngf, 3, 3, stride=2, padding=1, output_padding=1, bias=False)
 
         self._initialize_weights()
 
@@ -193,14 +193,17 @@ class ConvGenTime(nn.Module):
         h = self.relu9(h) # 64,112,112
         h += pool1
 
-        h = self.deconv10(h)
-        h = F.tanh(h) # 3,224,224
+        h = self.deconvRGB(h)
+        rgb = F.tanh(h) # 3,224,224
+
+        h = self.deconvLAB(h)
+        lab = F.tanh(h) # 3,224,224
 
         # =========================
         # Step 4  -END- UNET decoder
         # =========================
 
-        return h
+        return rgb, lab
 
     def _initialize_weights(self):
         for m in self.modules():
