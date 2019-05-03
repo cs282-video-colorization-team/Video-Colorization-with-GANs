@@ -305,7 +305,6 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
 
     with torch.no_grad(): # Fuck torch.no_grad!! Gradient will accumalte if you don't set torch.no_grad()!!
         for i, (data, target) in enumerate(val_loader):
-            print(data.shape, target.shape)
             data, target = Variable(data.cuda()), Variable(target.cuda())
             ########################
             # D network
