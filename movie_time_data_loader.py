@@ -6,27 +6,29 @@ from torch.utils.data import Dataset
 from PIL import Image
 
 class MovieTime(Dataset):
-    def __init__(self, image_path, transform_color, transform_gray, mode):
+    def __init__(self, image_path, transform_color, transform_gray, mode, start_index):
         self.image_path = image_path
         self.transform_color = transform_color
         self.transform_gray = transform_gray
         self.IMAGE_RESIZE = (480, 480)
         self.mode = mode
+        self.start_index = start_index
 
         self.data_files_name = [file for file in os.listdir(self.image_path) if os.path.splitext(file)[1] == '.png']
+        self.end_index = 1 + len(self.data_files_name)
 
     def __getitem__(self, index):
 
         now_file_name = self.data_files_name[index]
         now_timestamp = int(now_file_name.split('.')[0])
 
-        if now_timestamp > 1:
+        if now_timestamp > self.start_index:
             prev_timestamp_str = str(now_timestamp - 1)
             prev_file_name = '0' * (5-len(prev_timestamp_str)) + prev_timestamp_str + '.png'
         else:
             prev_file_name = now_file_name
 
-        if now_timestamp < len(self.data_files_name) - 1:
+        if now_timestamp < self.end_index - 1:
             next_timestamp_str = str(now_timestamp + 1)
             next_file_name = '0' * (5-len(next_timestamp_str)) + next_timestamp_str + '.png'
         else:
@@ -52,7 +54,7 @@ class MovieTime(Dataset):
     def __len__(self):
         return len(self.data_files_name)
 
-def get_movie_time_loader(image_path, batch_size=16, mode='train', num_workers=1):
+def get_movie_time_loader(image_path, batch_size=16, mode='train', start_index = 1, num_workers=1):
 
     transform_gray = []
     transform_gray.append(transforms.Grayscale())
@@ -67,7 +69,7 @@ def get_movie_time_loader(image_path, batch_size=16, mode='train', num_workers=1
     else:
         transform_color = None
 
-    dataset = MovieTime(image_path, transform_color, transform_gray, mode)
+    dataset = MovieTime(image_path, transform_color, transform_gray, mode, start_index)
 
     data_loader = data.DataLoader(dataset=dataset,
                                   batch_size=batch_size,
