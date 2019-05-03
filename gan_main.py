@@ -226,7 +226,7 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
         labelv = Variable(label.fill_(real_label))
 
         for j in range(args.numG):
-            fake = model_G()
+            fake = model_G(data)
             model_G.zero_grad()
             output = model_D(fake)
             errG_GAN = criterion(torch.squeeze(output), labelv)
