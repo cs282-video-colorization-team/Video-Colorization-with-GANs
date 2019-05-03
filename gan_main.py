@@ -149,19 +149,22 @@ def main():
     # start loop
     start_epoch = 0
 
+    best_val_errG = np.inf
     for epoch in range(start_epoch, args.num_epoch):
         print('Epoch {}/{}'.format(epoch, args.num_epoch - 1))
         print('-' * 20)
         # train
         train_errG, train_errD = train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, iteration)
         # validate
-        val_lerrG, val_errD = validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch)
+        val_errG, val_errD = validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch)
 
         plotter.train_update(train_errG, train_errD)
-        plotter.val_update(val_lerrG, val_errD)
+        plotter.val_update(val_errG, val_errD)
         plotter.draw(img_path + 'train_val.png')
 
-        if args.save and (epoch % 10 == 9):
+        is_best = val_errG < best_val_errG
+        best_val_errG = min(val_errG, best_val_errG)
+        if args.save and is_best:
             print('Saving check point')
             save_checkpoint({'epoch': epoch + 1,
                              'state_dict': model_G.state_dict(),
