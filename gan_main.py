@@ -177,7 +177,7 @@ def main():
         plotter.val_update(val_lerrG, val_errD)
         plotter.draw(img_path + 'train_val.png')
 
-        if args.save:
+        if args.save and (epoch % 10 == 9):
             print('Saving check point')
             save_checkpoint({'epoch': epoch + 1,
                              'state_dict': model_G.state_dict(),
