@@ -51,6 +51,7 @@ parser.add_argument('--ndf', default=32, type=int,
                     help='# of discrim filters in first conv layer')
 
 parser.add_argument('--numG', default=5, type=int, help='G trains numG times when D trains per time')
+parser.add_argument('--patchGAN', action='store_true', help='Use patchGAN in Discriminator')
 
 # parser.add_argument('-p', '--plot', action="store_true",
 #                     help='Plot accuracy and loss diagram?')
@@ -67,7 +68,10 @@ def main():
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
     model_G = ConvGenTime(args.ngf)
-    model_D = ConvDis(large=args.large, ndf=args.ndf)
+    if args.patchGAN:
+        model_D = PatchDis(large=args.large, ndf=args.ndf)
+    else:
+        model_D = ConvDis(large=args.large, ndf=args.ndf)
 
     start_epoch_G = start_epoch_D = 0
     if args.model_G:
