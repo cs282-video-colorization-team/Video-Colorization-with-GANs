@@ -132,9 +132,9 @@ def main():
     size = ''
     if args.large: size = '_Large'
     img_path = 'img/%s/GAN_%s%s_%dL1_bs%d_%s_lr%s/' \
-               % (date, args.dataset, size, args.lamb, args.batch_size, 'Adam', str(args.lr))
+               % (date, size, args.lamb, args.batch_size, 'Adam', str(args.lr))
     model_path = 'model/%s/GAN_%s%s_%dL1_bs%d_%s_lr%s/' \
-               % (date, args.dataset, size, args.lamb, args.batch_size, 'Adam', str(args.lr))
+               % (date, size, args.lamb, args.batch_size, 'Adam', str(args.lr))
     if not os.path.exists(img_path):
         os.makedirs(img_path)
     if not os.path.exists(model_path):
