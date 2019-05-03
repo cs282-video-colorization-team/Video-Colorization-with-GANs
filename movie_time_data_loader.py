@@ -20,7 +20,7 @@ class MovieTime(Dataset):
         now_file_name = self.data_files_name[index]
         now_timestamp = int(now_file_name.split('.')[0])
 
-        if now_timestamp > 0:
+        if now_timestamp > 1:
             prev_timestamp_str = str(now_timestamp - 1)
             prev_file_name = '0' * (5-len(prev_timestamp_str)) + prev_timestamp_str + '.png'
         else:

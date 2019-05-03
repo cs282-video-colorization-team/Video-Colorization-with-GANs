@@ -49,6 +49,8 @@ parser.add_argument('--ngf', default=32, type=int,
 parser.add_argument('--ndf', default=32, type=int,
                     help='# of discrim filters in first conv layer')
 
+parser.add_argument('--numG', default=5, type=int, help='G trains numG times when D trains per time')
+
 # parser.add_argument('-p', '--plot', action="store_true",
 #                     help='Plot accuracy and loss diagram?')
 parser.add_argument('-s','--save', action="store_true",
@@ -219,16 +221,20 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
         ########################
         # update G network
         ########################
-        model_G.zero_grad()
-        labelv = Variable(label.fill_(real_label))
-        output = model_D(fake)
-        errG_GAN = criterion(torch.squeeze(output), labelv)
-        errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
 
-        errG = errG_GAN + args.lamb * errG_L1
-        errG.backward()
-        D_G_x2 = output.data.mean()
-        optimizer_G.step()
+        labelv = Variable(label.fill_(real_label))
+
+        for j in range(args.numG):
+            fake =  model_G(_now, _prev, _next)
+            model_G.zero_grad()
+            output = model_D(fake)
+            errG_GAN = criterion(torch.squeeze(output), labelv)
+            errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
+
+            errG = errG_GAN + args.lamb * errG_L1
+            errG.backward()
+            D_G_x2 = output.data.mean()
+            optimizer_G.step()
 
         # store error values
         errorG.update(errG, target.size(0), history=1)
