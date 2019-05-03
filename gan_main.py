@@ -53,8 +53,6 @@ parser.add_argument('--ndf', default=32, type=int,
 parser.add_argument('--numG', default=5, type=int, help='G trains numG times when D trains per time')
 parser.add_argument('--patchD', action='store_true', help='Using the patchGAN as Discriminator')
 
-parser.add_argument('--test', default=False, type=bool, help='To test the model on test set')
-parser.add_argument('--testPath', default='RomanDiscrete/', type=str, help='the path of test data')
 # parser.add_argument('-p', '--plot', action="store_true",
 #                     help='Plot accuracy and loss diagram?')
 parser.add_argument('-s','--save', action="store_true",
@@ -125,13 +123,6 @@ def main():
                             num_workers=4,
                             )
 
-    if args.test:
-        test_loader = get_loader(os.path.join(data_root, args.testPath),
-                             batch_size=args.batch_size,
-                             large=args.large,
-                             mode='test',
-                             num_workers=4,
-                            )
 
     global val_bs
     val_bs = val_loader.batch_size
@@ -140,7 +131,7 @@ def main():
     # set up plotter, path, etc.
     global iteration, print_interval, plotter, plotter_basic
     iteration = 0
-    print_interval = 10
+    print_interval = args.numG * 5
     plotter = Plotter_GAN_TV()
     plotter_basic = Plotter_GAN()
 
