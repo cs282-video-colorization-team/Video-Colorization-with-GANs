@@ -56,30 +56,36 @@ class MovieTime(Dataset):
     def __getitem__(self, index):
 
         now_file_name = self.data_files_name[index]
+        now_timestamp = int(now_file_name.split('.')[0])
 
-        timestamp = int(now_file_name.split('.')[0])
-
-        if timestamp > 0:
-            prev_timestamp_str = str(timestamp - 1)
+        if now_timestamp > 0:
+            prev_timestamp_str = str(now_timestamp - 1)
             prev_file_name = '0' * (5-len(prev_timestamp_str)) + prev_timestamp_str + '.png'
+        else:
+            prev_file_name = now_file_name
 
-        if timestamp < len(self.data_files_name) - 1:
-            next_timestamp_str = str(timestamp + 1)
+        if now_timestamp < len(self.data_files_name) - 1:
+            next_timestamp_str = str(now_timestamp + 1)
             next_file_name = '0' * (5-len(next_timestamp_str)) + next_timestamp_str + '.png'
+        else:
+            next_file_name = now_file_name
 
+        # _now, _prev, _next
+        image_now = Image.open(os.path.join(self.image_path + now_file_name))
+        image_now = image.resize(self.IMAGE_RESIZE)
 
-        prev_file_name = self.data_files_name[index]
-        next_file_name = self.data_files_name[index]
+        image_prev = Image.open(os.path.join(self.image_path + prev_file_name))
+        image_prev = image.resize(self.IMAGE_RESIZE)
 
-        image = Image.open(os.path.join(self.image_path + self.data_files_name[index]))
-        image = image.resize(self.IMAGE_RESIZE)
+        image_next = Image.open(os.path.join(self.image_path + next_file_name))
+        image_next = image.resize(self.IMAGE_RESIZE)
 
         if self.mode == 'train':
-            return self.transform_gray(image), self.transform_color(image)
+            return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next), self.transform_color(image)
         elif self.mode == 'val':
-            return self.transform_gray(image), self.transform_color(image)
+            return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next), self.transform_color(image)
         elif self.mode == 'test':
-            return self.transform_gray(image)
+            return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next)
 
     def __len__(self):
         return len(self.data_files_name)
