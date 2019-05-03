@@ -51,7 +51,10 @@ parser.add_argument('--ngf', default=32, type=int,
 parser.add_argument('--ndf', default=32, type=int,
                     help='# of discrim filters in first conv layer')
 parser.add_argument('--numG', default=5, type=int, help='G trains numG times when D trains per time')
+parser.add_argument('--patchD', action='store_true', help='Using the patchGAN as Discriminator')
 
+parser.add_argument('--test', default=False, type=bool, help='To test the model on test set')
+parser.add_argument('--testPath', default='RomanDiscrete/', type=str, help='the path of test data')
 # parser.add_argument('-p', '--plot', action="store_true",
 #                     help='Plot accuracy and loss diagram?')
 parser.add_argument('-s','--save', action="store_true",
@@ -60,9 +63,8 @@ parser.add_argument('--gpu', default=0, type=int,
                     help='Which GPU to use?')
 
 def main():
-    global args, date
+    global args
     args = parser.parse_args()
-    date = '0502'
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
@@ -123,6 +125,14 @@ def main():
                             num_workers=4,
                             )
 
+    if args.test:
+        test_loader = get_loader(os.path.join(data_root, args.testPath),
+                             batch_size=args.batch_size,
+                             large=args.large,
+                             mode='test',
+                             num_workers=4,
+                            )
+
     global val_bs
     val_bs = val_loader.batch_size
     print(val_bs)
@@ -130,17 +140,17 @@ def main():
     # set up plotter, path, etc.
     global iteration, print_interval, plotter, plotter_basic
     iteration = 0
-    print_interval = 5
+    print_interval = 10
     plotter = Plotter_GAN_TV()
     plotter_basic = Plotter_GAN()
 
     global img_path
     size = ''
     if args.large: size = '_Large'
-    img_path = 'img/%s/GAN_%s%s_%dL1_bs%d_%s_lr%s/' \
-               % (date, args.dataset, size, args.lamb, args.batch_size, 'Adam', str(args.lr))
-    model_path = 'model/%s/GAN_%s%s_%dL1_bs%d_%s_lr%s/' \
-               % (date, args.dataset, size, args.lamb, args.batch_size, 'Adam', str(args.lr))
+    img_path = 'img/GAN_%s_%dL1_bs%d_%s_lr%s_numG%d/' \
+               % (size, args.lamb, args.batch_size, 'Adam', str(args.lr), args.numG)
+    model_path = 'model/GAN_%s_%dL1_bs%d_%s_lr%s_numG%d/' \
+               % (size, args.lamb, args.batch_size, 'Adam', str(args.lr), args.numG)
     if not os.path.exists(img_path):
         os.makedirs(img_path)
     if not os.path.exists(model_path):
@@ -170,15 +180,25 @@ def main():
                              'state_dict': model_G.state_dict(),
                              'optimizer': optimizer_G.state_dict(),
                              },
-                             filename=model_path+'G_epoch%d.pth.tar' \
-                             % epoch)
+                             filename=model_path+'BestG.pth.tar')
             save_checkpoint({'epoch': epoch + 1,
                              'state_dict': model_D.state_dict(),
                              'optimizer': optimizer_D.state_dict(),
                              },
-                             filename=model_path+'D_epoch%d.pth.tar' \
-                             % epoch)
+                             filename=model_path+'BestD.pth.tar')
 
+    # Save the latest model
+    print('Save the lastest model')
+    save_checkpoint({'epoch': epoch + 1,
+                     'state_dict': model_G.state_dict(),
+                     'optimizer': optimizer_G.state_dict(),
+                     },
+                     filename=model_path+'LatestG.pth.tar')
+    save_checkpoint({'epoch': epoch + 1,
+                     'state_dict': model_D.state_dict(),
+                     'optimizer': optimizer_D.state_dict(),
+                     },
+                     filename=model_path+'LatestD.pth.tar')
 
 
 def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, iteration):
@@ -204,54 +224,55 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
         # update D network
         ########################
         # train with real
-        model_D.zero_grad()
-        output = model_D(target)
-        label = torch.FloatTensor(target.size(0)).fill_(real_label).cuda()
-        labelv = Variable(label)
-        errD_real = criterion(torch.squeeze(output), labelv)
-        errD_real.backward()
-        D_x = output.data.mean()
 
-        # train with fake
-        fake =  model_G(data)
-        labelv = Variable(label.fill_(fake_label))
-        output = model_D(fake.detach())
-        errD_fake = criterion(torch.squeeze(output), labelv)
-        errD_fake.backward()
-        D_G_x1 = output.data.mean()
+        if (i % args.numG) == 0:
+            model_D.zero_grad()
+            output = model_D(target)
+            label = torch.FloatTensor(target.size(0)).fill_(real_label).cuda()
+            labelv = Variable(label)
+            errD_real = criterion(torch.squeeze(output), labelv)
+            errD_real.backward()
+            D_x = output.data.mean()
 
-        errD = errD_real + errD_fake
-        optimizer_D.step()
+            # train with fake
+            fake =  model_G(data)
+            labelv = Variable(label.fill_(fake_label))
+            output = model_D(fake.detach())
+            errD_fake = criterion(torch.squeeze(output), labelv)
+            errD_fake.backward()
+            D_G_x1 = output.data.mean()
+
+            errD = errD_real + errD_fake
+            optimizer_D.step()
 
         ########################
         # update G network
         ########################
         labelv = Variable(label.fill_(real_label))
+        fake = model_G(data)
+        model_G.zero_grad()
+        output = model_D(fake)
+        errG_GAN = criterion(torch.squeeze(output), labelv)
+        errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
 
-        for j in range(args.numG):
-            fake = model_G(data)
-            model_G.zero_grad()
-            output = model_D(fake)
-            errG_GAN = criterion(torch.squeeze(output), labelv)
-            errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
-
-            errG = errG_GAN + args.lamb * errG_L1
-            errG.backward()
-            D_G_x2 = output.data.mean()
-            optimizer_G.step()
+        errG = errG_GAN + args.lamb * errG_L1
+        errG.backward()
+        D_G_x2 = output.data.mean()
+        optimizer_G.step()
 
         # store error values
-        errorG.update(errG, target.size(0), history=1)
-        errorD.update(errD, target.size(0), history=1)
-        errorG_basic.update(errG, target.size(0), history=1)
-        errorD_basic.update(errD, target.size(0), history=1)
-        errorD_real.update(errD_real, target.size(0), history=1)
-        errorD_fake.update(errD_fake, target.size(0), history=1)
+        if (i % args.numG) == 0:
+            errorG.update(errG, target.size(0), history=1)
+            errorD.update(errD, target.size(0), history=1)
+            errorG_basic.update(errG, target.size(0), history=1)
+            errorD_basic.update(errD, target.size(0), history=1)
+            errorD_real.update(errD_real, target.size(0), history=1)
+            errorD_fake.update(errD_fake, target.size(0), history=1)
 
-        errorD_real.update(errD_real, target.size(0), history=1)
-        errorD_fake.update(errD_fake, target.size(0), history=1)
-        errorG_GAN.update(errG_GAN, target.size(0), history=1)
-        errorG_R.update(errG_L1, target.size(0), history=1)
+            errorD_real.update(errD_real, target.size(0), history=1)
+            errorD_fake.update(errD_fake, target.size(0), history=1)
+            errorG_GAN.update(errG_GAN, target.size(0), history=1)
+            errorG_R.update(errG_L1, target.size(0), history=1)
 
         if iteration == 0:
             vis_result(data.data, target.data, fake.data, epoch, mode='train')
