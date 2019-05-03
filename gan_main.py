@@ -50,6 +50,7 @@ parser.add_argument('--ngf', default=32, type=int,
                     help='# of gen filters in first conv layer')
 parser.add_argument('--ndf', default=32, type=int,
                     help='# of discrim filters in first conv layer')
+parser.add_argument('--numG', default=5, type=int, help='G trains numG times when D trains per time')
 
 # parser.add_argument('-p', '--plot', action="store_true",
 #                     help='Plot accuracy and loss diagram?')
@@ -106,13 +107,7 @@ def main():
     L1 = nn.L1Loss()
 
     # dataset
-    # data_root = '/home/users/u5612799/DATA/Spongebob/'
     data_root = args.path
-
-    # data_train = myDataset(os.path.join(data_root, 'train/'),
-    #                        transform=image_transform,
-    #                        mode='train',
-    #                     )
 
     train_loader = get_loader(os.path.join(data_root, 'train/'),
                              batch_size=args.batch_size,
@@ -121,21 +116,12 @@ def main():
                              num_workers=4,
                             )
 
-    # data_val = myDataset(os.path.join(data_root, 'val/'), 
-    #                    transform=image_transform,
-    #                    mode='val',
-    #                 )
     val_loader = get_loader(os.path.join(data_root, 'val/'),
                             batch_size=args.batch_size,
                             large=args.large,
                             mode='val',
                             num_workers=4,
                             )
-    # val_loader = (data_val,
-    #                             batch_size=args.batch_size,
-    #                             shuffle=False,
-    #                             num_workers=4
-    #                             )
 
     global val_bs
     val_bs = val_loader.batch_size
@@ -166,8 +152,6 @@ def main():
     for epoch in range(start_epoch, args.num_epoch):
         print('Epoch {}/{}'.format(epoch, args.num_epoch - 1))
         print('-' * 20)
-        if epoch == 0:
-            val_lerrG, val_errD = validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch=-1)
         # train
         train_errG, train_errD = train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, iteration)
         # validate
@@ -239,16 +223,19 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
         ########################
         # update G network
         ########################
-        model_G.zero_grad()
         labelv = Variable(label.fill_(real_label))
-        output = model_D(fake)
-        errG_GAN = criterion(torch.squeeze(output), labelv)
-        errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
 
-        errG = errG_GAN + args.lamb * errG_L1
-        errG.backward()
-        D_G_x2 = output.data.mean()
-        optimizer_G.step()
+        for j in range(args.numG):
+            fake = model_G(data)
+            model_G.zero_grad()
+            output = model_D(fake)
+            errG_GAN = criterion(torch.squeeze(output), labelv)
+            errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
+
+            errG = errG_GAN + args.lamb * errG_L1
+            errG.backward()
+            D_G_x2 = output.data.mean()
+            optimizer_G.step()
 
         # store error values
         errorG.update(errG, target.size(0), history=1)
@@ -262,6 +249,9 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
         errorD_fake.update(errD_fake, target.size(0), history=1)
         errorG_GAN.update(errG_GAN, target.size(0), history=1)
         errorG_R.update(errG_L1, target.size(0), history=1)
+
+        if iteration == 0:
+            vis_result(data.data, target.data, fake.data, epoch, mode='train')
 
 
         if iteration % print_interval == 0:
@@ -300,7 +290,6 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
 
     with torch.no_grad(): # Fuck torch.no_grad!! Gradient will accumalte if you don't set torch.no_grad()!!
         for i, (data, target) in enumerate(val_loader):
-            print(data.shape, target.shape)
             data, target = Variable(data.cuda()), Variable(target.cuda())
             ########################
             # D network
@@ -333,7 +322,7 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
             errorD.update(errD, target.size(0), history=1)
 
             if i == 0:
-                vis_result(data.data, target.data, fake.data, epoch)
+                vis_result(data.data, target.data, fake.data, epoch, mode='val')
 
             if i % 50 == 0:
                 print('Validating Epoch %d: [%d/%d]' \
@@ -344,7 +333,7 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
 
     return errorG.avg, errorD.avg
 
-def vis_result(data, target, output, epoch):
+def vis_result(data, target, output, epoch, mode='val'):
     '''visualize images for GAN'''
     img_list = []
     for i in range(min(32, val_bs)):
@@ -367,7 +356,10 @@ def vis_result(data, target, output, epoch):
     plt.imshow(img_list)
     plt.axis('off')
     plt.tight_layout()
-    plt.savefig(img_path + 'epoch%d_val.png' % epoch)
+    if mode=='val':
+        plt.savefig(img_path + 'epoch%d_val.png' % epoch)
+    else:
+        plt.savefig(img_path + 'epoch%d_train.png' % epoch)
     plt.clf()
 
 if __name__ == '__main__':
