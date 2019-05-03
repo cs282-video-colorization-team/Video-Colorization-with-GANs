@@ -211,7 +211,6 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
     fake_label = 0
 
     for i, (data, target) in enumerate(train_loader):
-        print(data.shape, target.shape)
         data, target = Variable(data.cuda()), Variable(target.cuda())
 
         ########################

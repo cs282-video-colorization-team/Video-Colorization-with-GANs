@@ -1,5 +1,6 @@
 # from transform import ReLabel, ToLabel, ToSP, Scale
-from gan_model import *
+from gan_model_time import ConvGenTime
+from gan_model import ConvDis
 from utils import *
 
 import torch
@@ -11,8 +12,7 @@ import torch.nn.functional as F
 import torchvision
 from torchvision import datasets, models, transforms
 from skimage import color
-# from MovieDataLoader import *
-from movie_data_loader import *
+from movie_time_data_loader import *
 
 import time
 import os
@@ -26,8 +26,6 @@ import matplotlib.pyplot as plt
 parser = argparse.ArgumentParser(description='Colorization using GAN')
 parser.add_argument('--path', type=str,
                     help='Root path for dataset')
-parser.add_argument('--dataset', type=str,
-                    help='which dataset?', choices=['sc2','flower','bob', 'movie'])
 parser.add_argument('--large', action="store_true",
                     help='Use larger images?')
 parser.add_argument('--batch_size', default=4, type=int,
@@ -65,7 +63,7 @@ def main():
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
-    model_G = ConvGen(args.ngf)
+    model_G = ConvGenTime(args.ngf)
     model_D = ConvDis(large=args.large, ndf=args.ndf)
 
     start_epoch_G = start_epoch_D = 0
@@ -106,40 +104,24 @@ def main():
     L1 = nn.L1Loss()
 
     # dataset
-    # data_root = '/home/users/u5612799/DATA/Spongebob/'
     data_root = args.path
 
-    # data_train = myDataset(os.path.join(data_root, 'train/'),
-    #                        transform=image_transform,
-    #                        mode='train',
-    #                     )
-
-    train_loader = get_loader(os.path.join(data_root, 'train/'),
+    train_loader = get_movie_time_loader(os.path.join(data_root, 'train/'),
                              batch_size=args.batch_size,
                              large=args.large,
                              mode='train',
                              num_workers=4,
                             )
 
-    # data_val = myDataset(os.path.join(data_root, 'val/'), 
-    #                    transform=image_transform,
-    #                    mode='val',
-    #                 )
-    val_loader = get_loader(os.path.join(data_root, 'val/'),
+    val_loader = get_movie_time_loader(os.path.join(data_root, 'val/'),
                             batch_size=args.batch_size,
                             large=args.large,
                             mode='val',
                             num_workers=4,
                             )
-    # val_loader = (data_val,
-    #                             batch_size=args.batch_size,
-    #                             shuffle=False,
-    #                             num_workers=4
-    #                             )
 
     global val_bs
     val_bs = val_loader.batch_size
-    print(val_bs)
 
     # set up plotter, path, etc.
     global iteration, print_interval, plotter, plotter_basic
@@ -211,7 +193,6 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
     fake_label = 0
 
     for i, (data, target) in enumerate(train_loader):
-        print(data.shape, target.shape)
         data, target = Variable(data.cuda()), Variable(target.cuda())
 
         ########################
