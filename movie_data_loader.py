@@ -32,11 +32,8 @@ class Movie(Dataset):
         #print (image, os.path.join(self.image_path + self.data_files_name[index]))
 
         if self.mode == 'train':
-            print (self.transform_gray(image).shape, self.transform_color(image).shape)
             return self.transform_gray(image), self.transform_color(image)
-
         elif self.mode == 'val':
-            print ('val', self.transform_gray(image).shape, self.transform_color(image).shape)
             return self.transform_gray(image), self.transform_color(image)
         elif self.mode == 'test':
             return self.transform_gray(image)
@@ -46,7 +43,6 @@ class Movie(Dataset):
 
 class MovieTime(Dataset):
     def __init__(self, image_path, transform_color, transform_gray, mode):
-
         self.image_path = image_path
         self.transform_color = transform_color
         self.transform_gray = transform_gray
@@ -114,7 +110,7 @@ def get_loader(image_path, batch_size=16, large=True, mode='train', num_workers=
                                   batch_size=batch_size,
                                   shuffle=(mode=='train'),
                                   num_workers=num_workers,
-                                  drop_last=True)
+                                  drop_last=True) # Fuck drop_last!!!
 
     return data_loader
 

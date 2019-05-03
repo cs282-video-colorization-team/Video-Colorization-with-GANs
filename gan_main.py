@@ -21,7 +21,6 @@ from PIL import Image
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
-from torchsummary import summary
 
 
 parser = argparse.ArgumentParser(description='Colorization using GAN')
@@ -167,8 +166,8 @@ def main():
     for epoch in range(start_epoch, args.num_epoch):
         print('Epoch {}/{}'.format(epoch, args.num_epoch - 1))
         print('-' * 20)
-        # if epoch == 0:
-        #     val_lerrG, val_errD = validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch=-1)
+        if epoch == 0:
+            val_lerrG, val_errD = validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch=-1)
         # train
         train_errG, train_errD = train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, iteration)
         # validate
@@ -212,6 +211,7 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
     fake_label = 0
 
     for i, (data, target) in enumerate(train_loader):
+        print(data.shape, target.shape)
         data, target = Variable(data.cuda()), Variable(target.cuda())
 
         ########################
@@ -299,47 +299,49 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
     real_label = 1
     fake_label = 0
 
-    for i, (data, target) in enumerate(val_loader):
-        data, target = Variable(data.cuda()), Variable(target.cuda())
-        ########################
-        # D network
-        ########################
-        # validate with real
-        output = model_D(target)
-        label = torch.FloatTensor(target.size(0)).fill_(real_label).cuda()
-        labelv = Variable(label)
-        errD_real = criterion(torch.squeeze(output), labelv)
+    with torch.no_grad(): # Fuck torch.no_grad!! Gradient will accumalte if you don't set torch.no_grad()!!
+        for i, (data, target) in enumerate(val_loader):
+            print(data.shape, target.shape)
+            data, target = Variable(data.cuda()), Variable(target.cuda())
+            ########################
+            # D network
+            ########################
+            # validate with real
+            output = model_D(target)
+            label = torch.FloatTensor(target.size(0)).fill_(real_label).cuda()
+            labelv = Variable(label)
+            errD_real = criterion(torch.squeeze(output), labelv)
 
-        # validate with fake
-        fake =  model_G(data)
-        labelv = Variable(label.fill_(fake_label))
-        output = model_D(fake.detach())
-        errD_fake = criterion(torch.squeeze(output), labelv)
+            # validate with fake
+            fake =  model_G(data)
+            labelv = Variable(label.fill_(fake_label))
+            output = model_D(fake.detach())
+            errD_fake = criterion(torch.squeeze(output), labelv)
 
-        errD = errD_real + errD_fake
+            errD = errD_real + errD_fake
 
-        ########################
-        # G network
-        ########################
-        labelv = Variable(label.fill_(real_label))
-        output = model_D(fake)
-        errG_GAN = criterion(torch.squeeze(output), labelv)
-        errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
+            ########################
+            # G network
+            ########################
+            labelv = Variable(label.fill_(real_label))
+            output = model_D(fake)
+            errG_GAN = criterion(torch.squeeze(output), labelv)
+            errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
 
-        errG = errG_GAN + args.lamb * errG_L1
+            errG = errG_GAN + args.lamb * errG_L1
 
-        errorG.update(errG, target.size(0), history=1)
-        errorD.update(errD, target.size(0), history=1)
+            errorG.update(errG, target.size(0), history=1)
+            errorD.update(errD, target.size(0), history=1)
 
-        if i == 0:
-            vis_result(data.data, target.data, fake.data, epoch)
+            if i == 0:
+                vis_result(data.data, target.data, fake.data, epoch)
 
-        if i % 50 == 0:
-            print('Validating Epoch %d: [%d/%d]' \
-                % (epoch, i, len(val_loader)))
+            if i % 50 == 0:
+                print('Validating Epoch %d: [%d/%d]' \
+                    % (epoch, i, len(val_loader)))
 
-    print('Validation: Loss_D: %.4f Loss_G: %.4f '\
-        % (errorD.avg, errorG.avg))
+        print('Validation: Loss_D: %.4f Loss_G: %.4f '\
+            % (errorD.avg, errorG.avg))
 
     return errorG.avg, errorD.avg
 
