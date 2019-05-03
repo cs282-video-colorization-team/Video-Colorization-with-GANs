@@ -43,9 +43,9 @@ class MovieTime(Dataset):
         image_next = image_next.resize(self.IMAGE_RESIZE)
 
         if self.mode == 'train':
-            return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next), self.transform_color(image)
+            return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next), self.transform_color(image_now)
         elif self.mode == 'val':
-            return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next), self.transform_color(image)
+            return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next), self.transform_color(image_now)
         elif self.mode == 'test':
             return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next)
 
