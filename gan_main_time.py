@@ -21,6 +21,7 @@ from PIL import Image
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+import datetime
 
 
 parser = argparse.ArgumentParser(description='Colorization using GAN')
@@ -61,7 +62,7 @@ parser.add_argument('--gpu', default=0, type=int,
 def main():
     global args, date
     args = parser.parse_args()
-    date = 'time0502'
+    date = str(datetime.datetime.now())
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
