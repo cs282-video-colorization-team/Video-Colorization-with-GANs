@@ -26,7 +26,6 @@ class Movie(Dataset):
         self.data_files_name = [file for file in os.listdir(file_path) if os.path.splitext(file)[1] == '.png']
 
     def __getitem__(self, index):
-
         image = Image.open(os.path.join(self.image_path + self.data_files_name[index]))
         # image.thumbnail(self.IMAGE_SIZE)
         image = image.resize(self.IMAGE_SIZE)
@@ -44,7 +43,6 @@ class Movie(Dataset):
 
 class MovieTime(Dataset):
     def __init__(self, image_path, transform_color, transform_gray, mode):
-
         self.image_path = image_path
         self.transform_color = transform_color
         self.transform_gray = transform_gray
@@ -117,7 +115,8 @@ def get_loader(image_path, batch_size=16, large=True, mode='train', num_workers=
     data_loader = data.DataLoader(dataset=dataset,
                                   batch_size=batch_size,
                                   shuffle=(mode=='train'),
-                                  num_workers=num_workers)
+                                  num_workers=num_workers,
+                                  drop_last=True) # Fuck drop_last!!!
 
     return data_loader
 
@@ -142,6 +141,7 @@ def get_movie_time_loader(image_path, batch_size=16, mode='train', num_workers=1
     data_loader = data.DataLoader(dataset=dataset,
                                   batch_size=batch_size,
                                   shuffle=(mode=='train'),
-                                  num_workers=num_workers)
+                                  num_workers=num_workers,
+                                  drop_last=True)
 
     return data_loader

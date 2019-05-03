@@ -46,6 +46,10 @@ parser.add_argument('--model_G', default='', type=str,
                     help='Path to resume for Generator model')
 parser.add_argument('--model_D', default='', type=str,
                     help='Path to resume for Discriminator model')
+parser.add_argument('--ngf', default=32, type=int,
+                    help='# of gen filters in first conv layer')
+parser.add_argument('--ndf', default=32, type=int,
+                    help='# of discrim filters in first conv layer')
 
 # parser.add_argument('-p', '--plot', action="store_true",
 #                     help='Plot accuracy and loss diagram?')
@@ -61,8 +65,8 @@ def main():
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
-    model_G = ConvGen()
-    model_D = ConvDis(large=args.large)
+    model_G = ConvGen(args.ngf)
+    model_D = ConvDis(large=args.large, ndf=args.ndf)
 
     start_epoch_G = start_epoch_D = 0
     if args.model_G:
@@ -135,6 +139,7 @@ def main():
 
     global val_bs
     val_bs = val_loader.batch_size
+    print(val_bs)
 
     # set up plotter, path, etc.
     global iteration, print_interval, plotter, plotter_basic
@@ -206,6 +211,7 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
     fake_label = 0
 
     for i, (data, target) in enumerate(train_loader):
+        print(data.shape, target.shape)
         data, target = Variable(data.cuda()), Variable(target.cuda())
 
         ########################
@@ -293,47 +299,49 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
     real_label = 1
     fake_label = 0
 
-    for i, (data, target) in enumerate(val_loader):
-        data, target = Variable(data.cuda()), Variable(target.cuda())
-        ########################
-        # D network
-        ########################
-        # validate with real
-        output = model_D(target)
-        label = torch.FloatTensor(target.size(0)).fill_(real_label).cuda()
-        labelv = Variable(label)
-        errD_real = criterion(torch.squeeze(output), labelv)
+    with torch.no_grad(): # Fuck torch.no_grad!! Gradient will accumalte if you don't set torch.no_grad()!!
+        for i, (data, target) in enumerate(val_loader):
+            print(data.shape, target.shape)
+            data, target = Variable(data.cuda()), Variable(target.cuda())
+            ########################
+            # D network
+            ########################
+            # validate with real
+            output = model_D(target)
+            label = torch.FloatTensor(target.size(0)).fill_(real_label).cuda()
+            labelv = Variable(label)
+            errD_real = criterion(torch.squeeze(output), labelv)
 
-        # validate with fake
-        fake =  model_G(data)
-        labelv = Variable(label.fill_(fake_label))
-        output = model_D(fake.detach())
-        errD_fake = criterion(torch.squeeze(output), labelv)
+            # validate with fake
+            fake =  model_G(data)
+            labelv = Variable(label.fill_(fake_label))
+            output = model_D(fake.detach())
+            errD_fake = criterion(torch.squeeze(output), labelv)
 
-        errD = errD_real + errD_fake
+            errD = errD_real + errD_fake
 
-        ########################
-        # G network
-        ########################
-        labelv = Variable(label.fill_(real_label))
-        output = model_D(fake)
-        errG_GAN = criterion(torch.squeeze(output), labelv)
-        errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
+            ########################
+            # G network
+            ########################
+            labelv = Variable(label.fill_(real_label))
+            output = model_D(fake)
+            errG_GAN = criterion(torch.squeeze(output), labelv)
+            errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
 
-        errG = errG_GAN + args.lamb * errG_L1
+            errG = errG_GAN + args.lamb * errG_L1
 
-        errorG.update(errG, target.size(0), history=1)
-        errorD.update(errD, target.size(0), history=1)
+            errorG.update(errG, target.size(0), history=1)
+            errorD.update(errD, target.size(0), history=1)
 
-        if i == 0:
-            vis_result(data.data, target.data, fake.data, epoch)
+            if i == 0:
+                vis_result(data.data, target.data, fake.data, epoch)
 
-        if i % 50 == 0:
-            print('Validating Epoch %d: [%d/%d]' \
-                % (epoch, i, len(val_loader)))
+            if i % 50 == 0:
+                print('Validating Epoch %d: [%d/%d]' \
+                    % (epoch, i, len(val_loader)))
 
-    print('Validation: Loss_D: %.4f Loss_G: %.4f '\
-        % (errorD.avg, errorG.avg))
+        print('Validation: Loss_D: %.4f Loss_G: %.4f '\
+            % (errorD.avg, errorG.avg))
 
     return errorG.avg, errorD.avg
 
@@ -342,6 +350,7 @@ def vis_result(data, target, output, epoch):
     img_list = []
     for i in range(min(32, val_bs)):
         l = torch.unsqueeze(torch.squeeze(data[i]), 0).cpu().numpy()
+        # from IPython import embed; embed()
         raw = target[i].cpu().numpy()
         pred = output[i].cpu().numpy()
 
