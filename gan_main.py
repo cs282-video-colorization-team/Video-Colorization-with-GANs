@@ -154,6 +154,9 @@ def main():
     for epoch in range(start_epoch, args.num_epoch):
         print('Epoch {}/{}'.format(epoch, args.num_epoch - 1))
         print('-' * 20)
+
+        if epoch == 0:
+            val_lerrG, val_errD = validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch=-1)
         # train
         train_errG, train_errD = train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, iteration)
         # validate
@@ -360,7 +363,9 @@ def vis_result(data, target, output, epoch, mode='val'):
         raw_rgb = (np.transpose(raw, (1,2,0)).astype(np.float64) + 1) / 2.
         pred_rgb = (np.transpose(pred, (1,2,0)).astype(np.float64) + 1) / 2.
 
-        grey = np.transpose(l, (1,2,0))
+        # denormalize the grey image for visualization 
+        grey = l * 0.5 + 0.5 
+        grey = np.transpose(grey, (1,2,0))
         grey = np.repeat(grey, 3, axis=2).astype(np.float64)
         img_list.append(np.concatenate((grey, raw_rgb, pred_rgb), 1))
 
