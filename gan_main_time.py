@@ -194,9 +194,9 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
     real_label = 1
     fake_label = 0
 
-    for i, (_now, _prev, _next, target) in enumerate(train_loader):
+    for i, (_now, _prev, _next, target, target_lab) in enumerate(train_loader):
 
-        _now, _prev, _next, target = Variable(_now.cuda()), Variable(_prev.cuda()), Variable(_next.cuda()), Variable(target.cuda())
+        _now, _prev, _next, target, target_lab = Variable(_now.cuda()), Variable(_prev.cuda()), Variable(_next.cuda()), Variable(target.cuda()), Variable(target_lab.cuda())
 
         ########################
         # update D network
@@ -212,7 +212,7 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
             D_x = output.data.mean()
 
             # train with fake
-            fake =  model_G(_now, _prev, _next)
+            fake, _ =  model_G(_now, _prev, _next)
             labelv = Variable(label.fill_(fake_label))
             output = model_D(fake.detach())
             errD_fake = criterion(torch.squeeze(output), labelv)
@@ -227,13 +227,14 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
         ########################
 
         labelv = Variable(label.fill_(real_label))
-        fake =  model_G(_now, _prev, _next)
+        fake, fake_lab = model_G(_now, _prev, _next)
         model_G.zero_grad()
         output = model_D(fake)
         errG_GAN = criterion(torch.squeeze(output), labelv)
         errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
+        errG_L1_lab = L1(fake_lab.view(fake_lab.size(0),-1), target_lab.view(target_lab.size(0),-1))
 
-        errG = errG_GAN + args.lamb * errG_L1
+        errG = errG_GAN + args.lamb * (errG_L1 + errG_L1_lab)
         errG.backward()
         D_G_x2 = output.data.mean()
         optimizer_G.step()
@@ -291,8 +292,8 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
     fake_label = 0
 
     with torch.no_grad(): # Fuck torch.no_grad!! Gradient will accumalte if you don't set torch.no_grad()!!
-        for i, (_now, _prev, _next, target) in enumerate(val_loader):
-            _now, _prev, _next, target = Variable(_now.cuda()), Variable(_prev.cuda()), Variable(_next.cuda()), Variable(target.cuda())
+        for i, (_now, _prev, _next, target, target_lab) in enumerate(val_loader):
+            _now, _prev, _next, target, target_lab = Variable(_now.cuda()), Variable(_prev.cuda()), Variable(_next.cuda()), Variable(target.cuda()), Variable(target_lab.cuda())
             ########################
             # D network
             ########################

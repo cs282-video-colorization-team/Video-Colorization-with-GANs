@@ -4,6 +4,7 @@ from torchvision import transforms
 from torch.utils import data
 from torch.utils.data import Dataset
 from PIL import Image
+from skimage.color import rgb2lab
 
 class MovieTime(Dataset):
     def __init__(self, image_path, transform_color, transform_gray, mode, start_index):
@@ -44,10 +45,13 @@ class MovieTime(Dataset):
         image_next = Image.open(os.path.join(self.image_path + next_file_name))
         image_next = image_next.resize(self.IMAGE_RESIZE)
 
+        # image color space in LAB
+        image_now_lab = rgb2lab(image_now)
+
         if self.mode == 'train':
-            return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next), self.transform_color(image_now)
+            return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next), self.transform_color(image_now), self.transform_color(image_now_lab)
         elif self.mode == 'val':
-            return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next), self.transform_color(image_now)
+            return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next), self.transform_color(image_now), self.transform_color(image_now_lab)
         elif self.mode == 'test':
             return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next)
 
