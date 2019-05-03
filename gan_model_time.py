@@ -193,11 +193,11 @@ class ConvGenTime(nn.Module):
         h = self.relu9(h) # 64,112,112
         h += pool1
 
-        h = self.deconvRGB(h)
-        rgb = F.tanh(h) # 3,224,224
+        rgb = self.deconvRGB(h)
+        rgb = F.tanh(rgb) # 3,224,224
 
-        h = self.deconvLAB(h)
-        lab = F.tanh(h) # 3,224,224
+        lab = self.deconvLAB(h)
+        lab = F.tanh(lab) # 3,224,224
 
         # =========================
         # Step 4  -END- UNET decoder

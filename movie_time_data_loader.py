@@ -48,10 +48,10 @@ class MovieTime(Dataset):
         # image color space in LAB
         image_now_lab = rgb2lab(image_now)
 
-        if self.mode == 'train':
-            return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next), self.transform_color(image_now), self.transform_color(image_now_lab)
+        if self.mode == 'train': 
+            return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next), self.transform_color(image_now), self.transform_color(image_now_lab).float()
         elif self.mode == 'val':
-            return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next), self.transform_color(image_now), self.transform_color(image_now_lab)
+            return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next), self.transform_color(image_now), self.transform_color(image_now_lab).float()
         elif self.mode == 'test':
             return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next)
 
