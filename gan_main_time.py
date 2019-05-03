@@ -251,6 +251,9 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
             errorG_GAN.update(errG_GAN, target.size(0), history=1)
             errorG_R.update(errG_L1, target.size(0), history=1)
 
+        if i == 0:
+            vis_result(_now.data, target.data, fake.data, epoch, mode = 'train')
+
 
         if iteration % print_interval == 0:
             print('Epoch%d[%d/%d]: Loss_D: %.4f(R%0.4f+F%0.4f) Loss_G: %0.4f(GAN%.4f+R%0.4f) D(x): %.4f D(G(z)): %.4f / %.4f' \
@@ -320,7 +323,7 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
             errorD.update(errD, target.size(0), history=1)
 
             if i == 0:
-                vis_result(_now.data, target.data, fake.data, epoch)
+                vis_result(_now.data, target.data, fake.data, epoch, mode = 'val')
 
             if i % 50 == 0:
                 print('Validating Epoch %d: [%d/%d]' \
@@ -331,7 +334,7 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
 
     return errorG.avg, errorD.avg
 
-def vis_result(data, target, output, epoch):
+def vis_result(data, target, output, epoch, mode='val'):
     '''visualize images for GAN'''
     img_list = []
     for i in range(min(32, val_bs)):
@@ -354,7 +357,10 @@ def vis_result(data, target, output, epoch):
     plt.imshow(img_list)
     plt.axis('off')
     plt.tight_layout()
-    plt.savefig(img_path + 'epoch%d_val.png' % epoch)
+    if mode=='val':
+        plt.savefig(img_path + 'epoch%d_val.png' % epoch)
+    else:
+        plt.savefig(img_path + 'epoch%d_train.png' % epoch)
     plt.clf()
 
 if __name__ == '__main__':

@@ -265,7 +265,7 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
             errorG_GAN.update(errG_GAN, target.size(0), history=1)
             errorG_R.update(errG_L1, target.size(0), history=1)
 
-        if iteration == 0:
+        if i == 0:
             vis_result(data.data, target.data, fake.data, epoch, mode='train')
 
 
