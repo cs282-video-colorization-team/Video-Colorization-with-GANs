@@ -21,6 +21,7 @@ from PIL import Image
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+from torchsummary import summary
 
 
 parser = argparse.ArgumentParser(description='Colorization using GAN')
@@ -46,6 +47,10 @@ parser.add_argument('--model_G', default='', type=str,
                     help='Path to resume for Generator model')
 parser.add_argument('--model_D', default='', type=str,
                     help='Path to resume for Discriminator model')
+parser.add_argument('--ngf', default=32, type=int,
+                    help='# of gen filters in first conv layer')
+parser.add_argument('--ndf', default=32, type=int,
+                    help='# of discrim filters in first conv layer')
 
 # parser.add_argument('-p', '--plot', action="store_true",
 #                     help='Plot accuracy and loss diagram?')
@@ -61,8 +66,8 @@ def main():
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
-    model_G = ConvGen()
-    model_D = ConvDis(large=args.large)
+    model_G = ConvGen(args.ngf)
+    model_D = ConvDis(large=args.large, ndf=args.ndf)
 
     start_epoch_G = start_epoch_D = 0
     if args.model_G:
@@ -135,6 +140,7 @@ def main():
 
     global val_bs
     val_bs = val_loader.batch_size
+    print(val_bs)
 
     # set up plotter, path, etc.
     global iteration, print_interval, plotter, plotter_basic
@@ -342,6 +348,7 @@ def vis_result(data, target, output, epoch):
     img_list = []
     for i in range(min(32, val_bs)):
         l = torch.unsqueeze(torch.squeeze(data[i]), 0).cpu().numpy()
+        # from IPython import embed; embed()
         raw = target[i].cpu().numpy()
         pred = output[i].cpu().numpy()
 

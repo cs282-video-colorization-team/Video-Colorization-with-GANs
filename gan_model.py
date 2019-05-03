@@ -6,46 +6,46 @@ import torch.nn.functional as F
 
 class ConvGen(nn.Module):
     '''Generator'''
-    def __init__(self):
+    def __init__(self, ngf=32):
         super(ConvGen, self).__init__()
 
-        self.conv1 = nn.Conv2d(1, 32, 3, stride=2, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(32)
+        self.conv1 = nn.Conv2d(1, ngf, 3, stride=2, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(ngf)
         self.relu1 = nn.LeakyReLU(0.1)
 
-        self.conv2 = nn.Conv2d(32, 64, 3, stride=2, padding=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(64)
+        self.conv2 = nn.Conv2d(ngf, ngf*2, 3, stride=2, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(ngf*2)
         self.relu2 = nn.LeakyReLU(0.1)
 
-        self.conv3 = nn.Conv2d(64, 128, 3, stride=2, padding=1, bias=False)
-        self.bn3 = nn.BatchNorm2d(128)
+        self.conv3 = nn.Conv2d(ngf*2, ngf*4, 3, stride=2, padding=1, bias=False)
+        self.bn3 = nn.BatchNorm2d(ngf*4)
         self.relu3 = nn.LeakyReLU(0.1)
 
-        self.conv4 = nn.Conv2d(128, 256, 3, stride=2, padding=1, bias=False)
-        self.bn4 = nn.BatchNorm2d(256)
+        self.conv4 = nn.Conv2d(ngf*4, ngf*8, 3, stride=2, padding=1, bias=False)
+        self.bn4 = nn.BatchNorm2d(ngf*8)
         self.relu4 = nn.LeakyReLU(0.1)
 
-        self.conv5 = nn.Conv2d(256, 256, 3, stride=2, padding=1, bias=False)
-        self.bn5 = nn.BatchNorm2d(256)
+        self.conv5 = nn.Conv2d(ngf*8, ngf*8, 3, stride=2, padding=1, bias=False)
+        self.bn5 = nn.BatchNorm2d(ngf*8)
         self.relu5 = nn.LeakyReLU(0.1)
 
-        self.deconv6 = nn.ConvTranspose2d(256, 256, 3, stride=2, padding=1, output_padding=1, bias=False)
-        self.bn6 = nn.BatchNorm2d(256)
+        self.deconv6 = nn.ConvTranspose2d(ngf*8, ngf*8, 3, stride=2, padding=1, output_padding=1, bias=False)
+        self.bn6 = nn.BatchNorm2d(ngf*8)
         self.relu6 = nn.ReLU()
 
-        self.deconv7 = nn.ConvTranspose2d(256, 128, 3, stride=2, padding=1, output_padding=1, bias=False)
-        self.bn7 = nn.BatchNorm2d(128)
+        self.deconv7 = nn.ConvTranspose2d(ngf*8, ngf*4, 3, stride=2, padding=1, output_padding=1, bias=False)
+        self.bn7 = nn.BatchNorm2d(ngf*4)
         self.relu7 = nn.ReLU()
 
-        self.deconv8 = nn.ConvTranspose2d(128, 64, 3, stride=2, padding=1, output_padding=1, bias=False)
-        self.bn8 = nn.BatchNorm2d(64)
+        self.deconv8 = nn.ConvTranspose2d(ngf*4, ngf*2, 3, stride=2, padding=1, output_padding=1, bias=False)
+        self.bn8 = nn.BatchNorm2d(ngf*2)
         self.relu8 = nn.ReLU()
 
-        self.deconv9 = nn.ConvTranspose2d(64, 32, 3, stride=2, padding=1, output_padding=1, bias=False)
-        self.bn9 = nn.BatchNorm2d(32)
+        self.deconv9 = nn.ConvTranspose2d(ngf*2, ngf, 3, stride=2, padding=1, output_padding=1, bias=False)
+        self.bn9 = nn.BatchNorm2d(ngf)
         self.relu9 = nn.ReLU()
 
-        self.deconv10 = nn.ConvTranspose2d(32, 3, 3, stride=2, padding=1, output_padding=1, bias=False)
+        self.deconv10 = nn.ConvTranspose2d(ngf, 3, 3, stride=2, padding=1, output_padding=1, bias=False)
         self.bn10 = nn.BatchNorm2d(3)
         self.relu10 = nn.ReLU()
 
@@ -114,54 +114,54 @@ class ConvGen(nn.Module):
 
 class ConvGenTime(nn.Module):
     '''Generator'''
-    def __init__(self):
+    def __init__(self, ngf=32):
         super(ConvGenTime, self).__init__()
 
-        self.conv1 = nn.Conv2d(1, 64, 3, stride=2, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(64)
+        self.conv1 = nn.Conv2d(1, ngf, 3, stride=2, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(ngf)
         self.relu1 = nn.LeakyReLU(0.1)
 
-        self.conv2 = nn.Conv2d(64, 128, 3, stride=2, padding=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(128)
+        self.conv2 = nn.Conv2d(ngf, ngf*2, 3, stride=2, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(ngf*2)
         self.relu2 = nn.LeakyReLU(0.1)
 
-        self.conv3 = nn.Conv2d(128, 256, 3, stride=2, padding=1, bias=False)
-        self.bn3 = nn.BatchNorm2d(256)
+        self.conv3 = nn.Conv2d(ngf*2, ngf*4, 3, stride=2, padding=1, bias=False)
+        self.bn3 = nn.BatchNorm2d(ngf*4)
         self.relu3 = nn.LeakyReLU(0.1)
 
-        self.conv4 = nn.Conv2d(256, 512, 3, stride=2, padding=1, bias=False)
-        self.bn4 = nn.BatchNorm2d(512)
+        self.conv4 = nn.Conv2d(ngf*4, ngf*8, 3, stride=2, padding=1, bias=False)
+        self.bn4 = nn.BatchNorm2d(ngf*8)
         self.relu4 = nn.LeakyReLU(0.1)
 
-        self.conv5 = nn.Conv2d(512, 512, 3, stride=2, padding=1, bias=False)
-        self.bn5 = nn.BatchNorm2d(512)
+        self.conv5 = nn.Conv2d(ngf*8, ngf*8, 3, stride=2, padding=1, bias=False)
+        self.bn5 = nn.BatchNorm2d(ngf*8)
         self.relu5 = nn.LeakyReLU(0.1)
 
         # === 1x1 cov for prev, now, next
-        self.conv1x1prev = nn.Conv2d(512, 64, 1, stride=1, padding=0, bias=False)
-        self.conv1x1now = nn.Conv2d(512, 384, 1, stride=1, padding=0, bias=False)
-        self.conv1x1next = nn.Conv2d(512, 64, 1, stride=1, padding=0, bias=False)
-        self.bn1x1 = nn.BatchNorm2d(512)
+        self.conv1x1prev = nn.Conv2d(ngf*8, ngf, 1, stride=1, padding=0, bias=False)
+        self.conv1x1now = nn.Conv2d(ngf*8, ngf*6, 1, stride=1, padding=0, bias=False)
+        self.conv1x1next = nn.Conv2d(ngf*8, ngf, 1, stride=1, padding=0, bias=False)
+        self.bn1x1 = nn.BatchNorm2d(ngf*8)
         self.relu1x1 = nn.LeakyReLU(0.1)
         # ===
 
-        self.deconv6 = nn.ConvTranspose2d(512, 512, 3, stride=2, padding=1, output_padding=1, bias=False)
-        self.bn6 = nn.BatchNorm2d(512)
+        self.deconv6 = nn.ConvTranspose2d(ngf*8, ngf*8, 3, stride=2, padding=1, output_padding=1, bias=False)
+        self.bn6 = nn.BatchNorm2d(ngf*8)
         self.relu6 = nn.ReLU()
 
-        self.deconv7 = nn.ConvTranspose2d(512, 256, 3, stride=2, padding=1, output_padding=1, bias=False)
-        self.bn7 = nn.BatchNorm2d(256)
+        self.deconv7 = nn.ConvTranspose2d(ngf*8, ngf*4, 3, stride=2, padding=1, output_padding=1, bias=False)
+        self.bn7 = nn.BatchNorm2d(ngf*4)
         self.relu7 = nn.ReLU()
 
-        self.deconv8 = nn.ConvTranspose2d(256, 128, 3, stride=2, padding=1, output_padding=1, bias=False)
-        self.bn8 = nn.BatchNorm2d(128)
+        self.deconv8 = nn.ConvTranspose2d(ngf*4, ngf*2, 3, stride=2, padding=1, output_padding=1, bias=False)
+        self.bn8 = nn.BatchNorm2d(ngf*2)
         self.relu8 = nn.ReLU()
 
-        self.deconv9 = nn.ConvTranspose2d(128, 64, 3, stride=2, padding=1, output_padding=1, bias=False)
-        self.bn9 = nn.BatchNorm2d(64)
+        self.deconv9 = nn.ConvTranspose2d(ngf*2, ngf, 3, stride=2, padding=1, output_padding=1, bias=False)
+        self.bn9 = nn.BatchNorm2d(ngf)
         self.relu9 = nn.ReLU()
 
-        self.deconv10 = nn.ConvTranspose2d(64, 3, 3, stride=2, padding=1, output_padding=1, bias=False)
+        self.deconv10 = nn.ConvTranspose2d(ngf, 3, 3, stride=2, padding=1, output_padding=1, bias=False)
         self.bn10 = nn.BatchNorm2d(3)
         self.relu10 = nn.ReLU()
 
@@ -323,37 +323,37 @@ class ConvGenTime(nn.Module):
 
 class ConvDis(nn.Module):
     '''Discriminator'''
-    def __init__(self, large=True):
+    def __init__(self, large=False, ndf=32):
         super(ConvDis, self).__init__()
 
-        self.conv1 = nn.Conv2d(3, 32, 3, stride=2, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(32)
+        self.conv1 = nn.Conv2d(3, ndf, 3, stride=2, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(ndf)
         self.relu1 = nn.LeakyReLU(0.1)
 
-        self.conv2 = nn.Conv2d(32, 64, 3, stride=2, padding=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(64)
+        self.conv2 = nn.Conv2d(ndf, ndf*2, 3, stride=2, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(ndf*2)
         self.relu2 = nn.LeakyReLU(0.1)
 
-        self.conv3 = nn.Conv2d(64, 128, 3, stride=2, padding=1, bias=False)
-        self.bn3 = nn.BatchNorm2d(128)
+        self.conv3 = nn.Conv2d(ndf*2, ndf*4, 3, stride=2, padding=1, bias=False)
+        self.bn3 = nn.BatchNorm2d(ndf*4)
         self.relu3 = nn.LeakyReLU(0.1)
 
-        self.conv4 = nn.Conv2d(128, 256, 3, stride=2, padding=1, bias=False)
-        self.bn4 = nn.BatchNorm2d(256)
+        self.conv4 = nn.Conv2d(ndf*4, ndf*8, 3, stride=2, padding=1, bias=False)
+        self.bn4 = nn.BatchNorm2d(ndf*8)
         self.relu4 = nn.LeakyReLU(0.1)
 
-        self.conv5 = nn.Conv2d(256, 256, 3, stride=2, padding=1, bias=False)
-        self.bn5 = nn.BatchNorm2d(256)
+        self.conv5 = nn.Conv2d(ndf*8, ndf*8, 3, stride=2, padding=1, bias=False)
+        self.bn5 = nn.BatchNorm2d(ndf*8)
         self.relu5 = nn.LeakyReLU(0.1)
 
         if large:
-            self.conv6 = nn.Conv2d(256, 256, 15, stride=1, padding=0, bias=False)
+            self.conv6 = nn.Conv2d(ndf*8, ndf*8, 15, stride=1, padding=0, bias=False)
         else:
-            self.conv6 = nn.Conv2d(256, 256, 7, stride=1, padding=0, bias=False)
-        self.bn6 = nn.BatchNorm2d(256)
+            self.conv6 = nn.Conv2d(ndf*8, ndf*8, 7, stride=1, padding=0, bias=False)
+        self.bn6 = nn.BatchNorm2d(ndf*8)
         self.relu6 = nn.LeakyReLU(0.1)
 
-        self.conv7 = nn.Conv2d(256, 1, 1, stride=1, padding=0, bias=False)
+        self.conv7 = nn.Conv2d(ndf*8, 1, 1, stride=1, padding=0, bias=False)
 
         self._initialize_weights()
 

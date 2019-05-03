@@ -33,8 +33,11 @@ class Movie(Dataset):
         #print (image, os.path.join(self.image_path + self.data_files_name[index]))
 
         if self.mode == 'train':
+            print (self.transform_gray(image).shape, self.transform_color(image).shape)
             return self.transform_gray(image), self.transform_color(image)
+
         elif self.mode == 'val':
+            print ('val', self.transform_gray(image).shape, self.transform_color(image).shape)
             return self.transform_gray(image), self.transform_color(image)
         elif self.mode == 'test':
             return self.transform_gray(image)
