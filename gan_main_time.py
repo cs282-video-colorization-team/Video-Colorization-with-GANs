@@ -131,9 +131,9 @@ def main():
     global img_path
     size = ''
     if args.large: size = '_Large'
-    img_path = 'img/%s/GAN_%s%s_%dL1_bs%d_%s_lr%s/' \
+    img_path = 'img/%s/GAN_%s_%dL1_bs%d_%s_lr%s/' \
                % (date, size, args.lamb, args.batch_size, 'Adam', str(args.lr))
-    model_path = 'model/%s/GAN_%s%s_%dL1_bs%d_%s_lr%s/' \
+    model_path = 'model/%s/GAN_%s_%dL1_bs%d_%s_lr%s/' \
                % (date, size, args.lamb, args.batch_size, 'Adam', str(args.lr))
     if not os.path.exists(img_path):
         os.makedirs(img_path)
