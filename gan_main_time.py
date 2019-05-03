@@ -128,7 +128,7 @@ def main():
     # set up plotter, path, etc.
     global iteration, print_interval, plotter, plotter_basic
     iteration = 0
-    print_interval = 5
+    print_interval = args.numG * 5
     plotter = Plotter_GAN_TV()
     plotter_basic = Plotter_GAN()
 
@@ -201,55 +201,55 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
         # update D network
         ########################
         # train with real
-        model_D.zero_grad()
-        output = model_D(target)
-        label = torch.FloatTensor(target.size(0)).fill_(real_label).cuda()
-        labelv = Variable(label)
-        errD_real = criterion(torch.squeeze(output), labelv)
-        errD_real.backward()
-        D_x = output.data.mean()
+        if (i % args.numG) == 0:
+            model_D.zero_grad()
+            output = model_D(target)
+            label = torch.FloatTensor(target.size(0)).fill_(real_label).cuda()
+            labelv = Variable(label)
+            errD_real = criterion(torch.squeeze(output), labelv)
+            errD_real.backward()
+            D_x = output.data.mean()
 
-        # train with fake
-        fake =  model_G(_now, _prev, _next)
-        labelv = Variable(label.fill_(fake_label))
-        output = model_D(fake.detach())
-        errD_fake = criterion(torch.squeeze(output), labelv)
-        errD_fake.backward()
-        D_G_x1 = output.data.mean()
+            # train with fake
+            fake =  model_G(_now, _prev, _next)
+            labelv = Variable(label.fill_(fake_label))
+            output = model_D(fake.detach())
+            errD_fake = criterion(torch.squeeze(output), labelv)
+            errD_fake.backward()
+            D_G_x1 = output.data.mean()
 
-        errD = errD_real + errD_fake
-        optimizer_D.step()
+            errD = errD_real + errD_fake
+            optimizer_D.step()
 
         ########################
         # update G network
         ########################
 
         labelv = Variable(label.fill_(real_label))
+        fake =  model_G(_now, _prev, _next)
+        model_G.zero_grad()
+        output = model_D(fake)
+        errG_GAN = criterion(torch.squeeze(output), labelv)
+        errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
 
-        for j in range(args.numG):
-            fake =  model_G(_now, _prev, _next)
-            model_G.zero_grad()
-            output = model_D(fake)
-            errG_GAN = criterion(torch.squeeze(output), labelv)
-            errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
-
-            errG = errG_GAN + args.lamb * errG_L1
-            errG.backward()
-            D_G_x2 = output.data.mean()
-            optimizer_G.step()
+        errG = errG_GAN + args.lamb * errG_L1
+        errG.backward()
+        D_G_x2 = output.data.mean()
+        optimizer_G.step()
 
         # store error values
-        errorG.update(errG, target.size(0), history=1)
-        errorD.update(errD, target.size(0), history=1)
-        errorG_basic.update(errG, target.size(0), history=1)
-        errorD_basic.update(errD, target.size(0), history=1)
-        errorD_real.update(errD_real, target.size(0), history=1)
-        errorD_fake.update(errD_fake, target.size(0), history=1)
+        if (i % args.numG) == 0:
+            errorG.update(errG, target.size(0), history=1)
+            errorD.update(errD, target.size(0), history=1)
+            errorG_basic.update(errG, target.size(0), history=1)
+            errorD_basic.update(errD, target.size(0), history=1)
+            errorD_real.update(errD_real, target.size(0), history=1)
+            errorD_fake.update(errD_fake, target.size(0), history=1)
 
-        errorD_real.update(errD_real, target.size(0), history=1)
-        errorD_fake.update(errD_fake, target.size(0), history=1)
-        errorG_GAN.update(errG_GAN, target.size(0), history=1)
-        errorG_R.update(errG_L1, target.size(0), history=1)
+            errorD_real.update(errD_real, target.size(0), history=1)
+            errorD_fake.update(errD_fake, target.size(0), history=1)
+            errorG_GAN.update(errG_GAN, target.size(0), history=1)
+            errorG_R.update(errG_L1, target.size(0), history=1)
 
 
         if iteration % print_interval == 0:
