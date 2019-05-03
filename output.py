@@ -5,7 +5,7 @@ from gan_model import *
  
 if __name__ == '__main__':
 	ngf = 64
-	PATH = 'G_epoch0.pth.tar'
+	PATH = 'G_epoch13.pth.tar'
 
 	save_path = 'output'
 	ori_path = 'demoOriginal'
