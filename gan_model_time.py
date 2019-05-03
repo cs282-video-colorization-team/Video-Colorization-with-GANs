@@ -2,6 +2,7 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import spectral_norm as SpectralNorm
 
 class ConvGenTime(nn.Module):
     '''Generator'''
@@ -9,47 +10,47 @@ class ConvGenTime(nn.Module):
         super(ConvGenTime, self).__init__()
 
         self.conv1 = nn.Conv2d(1, ngf, 3, stride=2, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(ngf)
+        self.bn1 = nn.InstanceNorm2d(ngf, affine=True)
         self.relu1 = nn.LeakyReLU(0.1)
 
         self.conv2 = nn.Conv2d(ngf, ngf*2, 3, stride=2, padding=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(ngf*2)
+        self.bn2 = nn.InstanceNorm2d(ngf*2, affine=True)
         self.relu2 = nn.LeakyReLU(0.1)
 
         self.conv3 = nn.Conv2d(ngf*2, ngf*4, 3, stride=2, padding=1, bias=False)
-        self.bn3 = nn.BatchNorm2d(ngf*4)
+        self.bn3 = nn.InstanceNorm2d(ngf*4, affine=True)
         self.relu3 = nn.LeakyReLU(0.1)
 
         self.conv4 = nn.Conv2d(ngf*4, ngf*8, 3, stride=2, padding=1, bias=False)
-        self.bn4 = nn.BatchNorm2d(ngf*8)
+        self.bn4 = nn.InstanceNorm2d(ngf*8, affine=True)
         self.relu4 = nn.LeakyReLU(0.1)
 
         self.conv5 = nn.Conv2d(ngf*8, ngf*8, 3, stride=2, padding=1, bias=False)
-        self.bn5 = nn.BatchNorm2d(ngf*8)
+        self.bn5 = nn.InstanceNorm2d(ngf*8, affine=True)
         self.relu5 = nn.LeakyReLU(0.1)
 
         # === 1x1 cov for prev, now, next
         self.conv1x1prev = nn.Conv2d(ngf*8, ngf, 1, stride=1, padding=0, bias=False)
         self.conv1x1now = nn.Conv2d(ngf*8, ngf*6, 1, stride=1, padding=0, bias=False)
         self.conv1x1next = nn.Conv2d(ngf*8, ngf, 1, stride=1, padding=0, bias=False)
-        self.bn1x1 = nn.BatchNorm2d(ngf*8)
+        self.bn1x1 = nn.InstanceNorm2d(ngf*8, affine=True)
         self.relu1x1 = nn.LeakyReLU(0.1)
         # ===
 
         self.deconv6 = nn.ConvTranspose2d(ngf*8, ngf*8, 3, stride=2, padding=1, output_padding=1, bias=False)
-        self.bn6 = nn.BatchNorm2d(ngf*8)
+        self.bn6 = nn.InstanceNorm2d(ngf*8, affine=True)
         self.relu6 = nn.ReLU()
 
         self.deconv7 = nn.ConvTranspose2d(ngf*8, ngf*4, 3, stride=2, padding=1, output_padding=1, bias=False)
-        self.bn7 = nn.BatchNorm2d(ngf*4)
+        self.bn7 = nn.InstanceNorm2d(ngf*4, affine=True)
         self.relu7 = nn.ReLU()
 
         self.deconv8 = nn.ConvTranspose2d(ngf*4, ngf*2, 3, stride=2, padding=1, output_padding=1, bias=False)
-        self.bn8 = nn.BatchNorm2d(ngf*2)
+        self.bn8 = nn.InstanceNorm2d(ngf*2, affine=True)
         self.relu8 = nn.ReLU()
 
         self.deconv9 = nn.ConvTranspose2d(ngf*2, ngf, 3, stride=2, padding=1, output_padding=1, bias=False)
-        self.bn9 = nn.BatchNorm2d(ngf)
+        self.bn9 = nn.InstanceNorm2d(ngf, affine=True)
         self.relu9 = nn.ReLU()
 
         self.deconvRGB = nn.ConvTranspose2d(ngf, 3, 3, stride=2, padding=1, output_padding=1, bias=False)
@@ -213,3 +214,62 @@ class ConvGenTime(nn.Module):
             if isinstance(m, nn.ConvTranspose2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
                 m.weight.data.normal_(0, math.sqrt(2. / n))
+
+
+class PatchDis(nn.Module):
+    '''Discriminator'''
+    def __init__(self, large=False, ndf=32):
+        super(PatchDis, self).__init__()
+
+        self.conv1 = nn.Conv2d(3, ndf, kernel_size=4, stride=2, padding=1)
+        self.sn1 = SpectralNorm(self.conv1)
+        self.relu1 = nn.LeakyReLU(0.01, inplace=True)
+
+        self.conv2 = nn.Conv2d(ndf, ndf*2, kernel_size=4, stride=2, padding=1)
+        self.sn2 = SpectralNorm(self.conv2)
+        self.relu2 = nn.LeakyReLU(0.01, inplace=True)
+
+        self.conv3 = nn.Conv2d(ndf*2, ndf*4, kernel_size=4, stride=2, padding=1)
+        self.sn3 = SpectralNorm(self.conv3)
+        self.relu3 = nn.LeakyReLU(0.01, inplace=True)
+
+        self.conv4 = nn.Conv2d(ndf*4, ndf*8, kernel_size=4, stride=1, padding=1)
+        self.sn4 = SpectralNorm(self.conv4)
+        self.relu4 = nn.LeakyReLU(0.01, inplace=True)
+
+        self.conv5 = nn.Conv2d(ndf*8, 1, kernel_size=4, stride=1, padding=1, bias=False)
+        self.sn5 = SpectralNorm(self.conv5)
+
+        self._initialize_weights()
+
+    def forward(self, x):
+        h = self.conv1(x)
+        h = self.sn1(h)
+        h = self.relu1(h)
+
+        h = self.conv2(h)
+        h = self.sn2(h)
+        h = self.relu2(h)
+
+        h = self.conv3(h)
+        h = self.sn3(h)
+        h = self.relu3(h)
+
+        h = self.conv4(h)
+        h = self.sn4(h)
+        h = self.relu4(h)
+
+        h = self.conv5(h)
+        h = self.sn5(h)
+
+        return h.squeeze()
+
+    def _initialize_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                m.weight.data.normal_(0, math.sqrt(2. / n))
+            if isinstance(m, nn.ConvTranspose2d):
+                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                m.weight.data.normal_(0, math.sqrt(2. / n))
+
