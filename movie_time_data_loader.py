@@ -13,7 +13,7 @@ class MovieTime(Dataset):
         self.IMAGE_RESIZE = (480, 480)
         self.mode = mode
 
-        self.data_files_name = [file for file in os.listdir(self.file_path) if os.path.splitext(file)[1] == '.png']
+        self.data_files_name = [file for file in os.listdir(self.image_path) if os.path.splitext(file)[1] == '.png']
 
     def __getitem__(self, index):
 
