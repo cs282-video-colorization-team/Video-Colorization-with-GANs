@@ -34,13 +34,13 @@ class MovieTime(Dataset):
 
         # _now, _prev, _next
         image_now = Image.open(os.path.join(self.image_path + now_file_name))
-        image_now = image.resize(self.IMAGE_RESIZE)
+        image_now = image_now.resize(self.IMAGE_RESIZE)
 
         image_prev = Image.open(os.path.join(self.image_path + prev_file_name))
-        image_prev = image.resize(self.IMAGE_RESIZE)
+        image_prev = image_prev.resize(self.IMAGE_RESIZE)
 
         image_next = Image.open(os.path.join(self.image_path + next_file_name))
-        image_next = image.resize(self.IMAGE_RESIZE)
+        image_next = image_next.resize(self.IMAGE_RESIZE)
 
         if self.mode == 'train':
             return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next), self.transform_color(image)

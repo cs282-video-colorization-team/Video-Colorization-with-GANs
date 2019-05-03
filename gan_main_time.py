@@ -59,7 +59,7 @@ parser.add_argument('--gpu', default=0, type=int,
 def main():
     global args, date
     args = parser.parse_args()
-    date = '0502'
+    date = 'time0502'
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
@@ -148,8 +148,7 @@ def main():
     for epoch in range(start_epoch, args.num_epoch):
         print('Epoch {}/{}'.format(epoch, args.num_epoch - 1))
         print('-' * 20)
-        if epoch == 0:
-            val_lerrG, val_errD = validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch=-1)
+
         # train
         train_errG, train_errD = train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, iteration)
         # validate
@@ -192,8 +191,9 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
     real_label = 1
     fake_label = 0
 
-    for i, (data, target) in enumerate(train_loader):
-        data, target = Variable(data.cuda()), Variable(target.cuda())
+    for i, (_now, _prev, _next, target) in enumerate(train_loader):
+
+        _now, _prev, _next, target = Variable(_now.cuda()), Variable(_prev.cuda()), Variable(_next.cuda()), Variable(target.cuda())
 
         ########################
         # update D network
@@ -208,7 +208,7 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
         D_x = output.data.mean()
 
         # train with fake
-        fake =  model_G(data)
+        fake =  model_G(_now, _prev, _next)
         labelv = Variable(label.fill_(fake_label))
         output = model_D(fake.detach())
         errD_fake = criterion(torch.squeeze(output), labelv)
@@ -281,9 +281,8 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
     fake_label = 0
 
     with torch.no_grad(): # Fuck torch.no_grad!! Gradient will accumalte if you don't set torch.no_grad()!!
-        for i, (data, target) in enumerate(val_loader):
-            print(data.shape, target.shape)
-            data, target = Variable(data.cuda()), Variable(target.cuda())
+        for i, (_now, _prev, _next, target) in enumerate(val_loader):
+            _now, _prev, _next, target = Variable(_now.cuda()), Variable(_prev.cuda()), Variable(_next.cuda()), Variable(target.cuda())
             ########################
             # D network
             ########################
@@ -294,7 +293,7 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
             errD_real = criterion(torch.squeeze(output), labelv)
 
             # validate with fake
-            fake =  model_G(data)
+            fake =  model_G(_now, _prev, _next)
             labelv = Variable(label.fill_(fake_label))
             output = model_D(fake.detach())
             errD_fake = criterion(torch.squeeze(output), labelv)
@@ -315,7 +314,7 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
             errorD.update(errD, target.size(0), history=1)
 
             if i == 0:
-                vis_result(data.data, target.data, fake.data, epoch)
+                vis_result(_now.data, target.data, fake.data, epoch)
 
             if i % 50 == 0:
                 print('Validating Epoch %d: [%d/%d]' \
