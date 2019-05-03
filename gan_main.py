@@ -131,7 +131,7 @@ def main():
     # set up plotter, path, etc.
     global iteration, print_interval, plotter, plotter_basic
     iteration = 0
-    print_interval = 10
+    print_interval = args.numG * 5
     plotter = Plotter_GAN_TV()
     plotter_basic = Plotter_GAN()
 
