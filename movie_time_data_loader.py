@@ -73,7 +73,7 @@ def get_movie_time_loader(image_path, batch_size=16, mode='train', start_index =
 
     data_loader = data.DataLoader(dataset=dataset,
                                   batch_size=batch_size,
-                                  shuffle=(mode=='train'),
+                                  shuffle=True,
                                   num_workers=num_workers,
                                   drop_last=True)
 
