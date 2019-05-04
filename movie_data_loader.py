@@ -47,7 +47,7 @@ def get_loader(image_path, batch_size=16, large=True, mode='train', num_workers=
     # else:
     #     crop = transforms.CenterCrop(224)
     transform_gray = []
-    if mode == 'test' and is_color == False:
+    if not (mode == 'test' and is_color == False):
         transform_gray.append(transforms.Grayscale())
     # transform_gray.append(crop)
     transform_gray.append(transforms.ToTensor())
