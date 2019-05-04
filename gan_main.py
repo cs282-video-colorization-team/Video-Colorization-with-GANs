@@ -21,6 +21,7 @@ from PIL import Image
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
 
 
 parser = argparse.ArgumentParser(description='Colorization using GAN')
@@ -63,6 +64,7 @@ parser.add_argument('--gpu', default=0, type=int,
 def main():
     global args
     args = parser.parse_args()
+    date = str(datetime.datetime.now()).replace(':', '_').replace(' ', '_').replace('.', '_')
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
@@ -138,10 +140,12 @@ def main():
     global img_path
     size = ''
     if args.large: size = '_Large'
-    img_path = 'img/GAN_%s_%dL1_bs%d_%s_lr%s_numG%d/' \
-               % (size, args.lamb, args.batch_size, 'Adam', str(args.lr), args.numG)
-    model_path = 'model/GAN_%s_%dL1_bs%d_%s_lr%s_numG%d/' \
-               % (size, args.lamb, args.batch_size, 'Adam', str(args.lr), args.numG)
+
+    img_path = 'img/baseline/%s/GAN_%s_L1%d_bs%d_%s_lr%s_ngf%d_ndf%d_numG%d/' \
+               % (date, size, args.lamb, args.batch_size, 'Adam', str(args.lr), args.ngf, args.ndf, args.numG)
+    model_path = 'model/baseline/%s/GAN_%s_L1%d_bs%d_%s_lr%s_ngf%d_ndf%d_numG%d/' \
+               % (date, size, args.lamb, args.batch_size, 'Adam', str(args.lr), args.ngf, args.ndf, args.numG)
+
     if not os.path.exists(img_path):
         os.makedirs(img_path)
     if not os.path.exists(model_path):
@@ -150,7 +154,6 @@ def main():
     # start loop
     start_epoch = 0
 
-    best_val_errG = np.inf
     for epoch in range(start_epoch, args.num_epoch):
         print('Epoch {}/{}'.format(epoch, args.num_epoch - 1))
         print('-' * 20)
@@ -166,33 +169,45 @@ def main():
         plotter.val_update(val_errG, val_errD)
         plotter.draw(img_path + 'train_val.png')
 
-        is_best = val_errG < best_val_errG
-        best_val_errG = min(val_errG, best_val_errG)
-        if args.save and is_best:
+        if args.save and (epoch % 10 == 9):
             print('Saving check point')
             save_checkpoint({'epoch': epoch + 1,
                              'state_dict': model_G.state_dict(),
                              'optimizer': optimizer_G.state_dict(),
+                             'Large': args.args.large,
+                             'ngf': args.ngf,
+                             'batch_size': args.batch_size,
+                             'ndf': args.ndf,
+                             'numG': args.numG,
                              },
-                             filename=model_path+'BestG.pth.tar')
-            save_checkpoint({'epoch': epoch + 1,
-                             'state_dict': model_D.state_dict(),
-                             'optimizer': optimizer_D.state_dict(),
-                             },
-                             filename=model_path+'BestD.pth.tar')
+                             filename=model_path+'G_epoch%d.pth.tar' \
+                             % epoch)
 
     # Save the latest model
     print('Save the lastest model')
     save_checkpoint({'epoch': epoch + 1,
-                     'state_dict': model_G.state_dict(),
-                     'optimizer': optimizer_G.state_dict(),
-                     },
-                     filename=model_path+'LatestG.pth.tar')
+                             'state_dict': model_G.state_dict(),
+                             'optimizer': optimizer_G.state_dict(),
+                             'Large': args.args.large,
+                             'ngf': args.ngf,
+                             'batch_size': args.batch_size,
+                             'ndf': args.ndf,
+                             'numG': args.numG,
+                             },
+                             filename=model_path+'Last_G_epoch%d.pth.tar' \
+                             % epoch)
+
     save_checkpoint({'epoch': epoch + 1,
                      'state_dict': model_D.state_dict(),
                      'optimizer': optimizer_D.state_dict(),
+                     'Large': args.args.large,
+                     'ngf': args.ngf,
+                     'batch_size': args.batch_size,
+                     'ndf': args.ndf,
+                     'numG': args.numG,
                      },
-                     filename=model_path+'LatestD.pth.tar')
+                     filename=model_path+'Last_D_epoch%d.pth.tar' \
+                     % epoch)
 
 
 def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, iteration):
@@ -372,15 +387,10 @@ def vis_result(data, target, output, epoch, mode='val'):
     img_list = [np.concatenate(img_list[4*i:4*(i+1)], axis=1) for i in range(len(img_list) // 4)]
     img_list = np.concatenate(img_list, axis=0)
 
-    plt.figure(figsize=(36,27))
-    plt.imshow(img_list)
-    plt.axis('off')
-    plt.tight_layout()
     if mode=='val':
-        plt.savefig(img_path + 'epoch%d_val.png' % epoch)
+        matplotlib.image.imsave(img_path + 'epoch%d_val.png' % epoch)
     else:
-        plt.savefig(img_path + 'epoch%d_train.png' % epoch)
-    plt.clf()
+        matplotlib.image.imsave(img_path + 'epoch%d_train.png' % epoch)
 
 if __name__ == '__main__':
     main()

@@ -148,9 +148,9 @@ def main():
     global img_path
     size = ''
     if args.large: size = 'Large'
-    img_path = 'img/%s/GAN_%s_L1%d_bs%d_%s_lr%s_ngf%d_ndf%d_numG%d/' \
+    img_path = 'img/model_time/%s/GAN_%s_L1%d_bs%d_%s_lr%s_ngf%d_ndf%d_numG%d/' \
                % (date, size, args.lamb, args.batch_size, 'Adam', str(args.lr), args.ngf, args.ndf, args.numG)
-    model_path = 'model/%s/GAN_%s_L1%d_bs%d_%s_lr%s_ngf%d_ndf%d_numG%d/' \
+    model_path = 'model/model_time/%s/GAN_%s_L1%d_bs%d_%s_lr%s_ngf%d_ndf%d_numG%d/' \
                % (date, size, args.lamb, args.batch_size, 'Adam', str(args.lr), args.ngf, args.ndf, args.numG)
     if not os.path.exists(img_path):
         os.makedirs(img_path)
@@ -178,15 +178,41 @@ def main():
             save_checkpoint({'epoch': epoch + 1,
                              'state_dict': model_G.state_dict(),
                              'optimizer': optimizer_G.state_dict(),
+                             'Large': args.args.large,
+                             'ngf': args.ngf,
+                             'batch_size': args.batch_size,
+                             'ndf': args.ndf,
+                             'numG': args.numG,
                              },
                              filename=model_path+'G_epoch%d.pth.tar' \
                              % epoch)
-            save_checkpoint({'epoch': epoch + 1,
-                             'state_dict': model_D.state_dict(),
-                             'optimizer': optimizer_D.state_dict(),
-                             },
-                             filename=model_path+'D_epoch%d.pth.tar' \
-                             % epoch)
+
+    # Save the latest model
+    print('Save the lastest model')
+    save_checkpoint({'epoch': epoch + 1,
+                     'state_dict': model_G.state_dict(),
+                     'optimizer': optimizer_G.state_dict(),
+                     'Large': args.args.large,
+                     'ngf': args.ngf,
+                     'batch_size': args.batch_size,
+                     'ndf': args.ndf,
+                     'numG': args.numG,
+                     },
+                     filename=model_path+'Last_G_epoch%d.pth.tar' \
+                     % epoch)
+
+
+    save_checkpoint({'epoch': epoch + 1,
+                     'state_dict': model_D.state_dict(),
+                     'optimizer': optimizer_D.state_dict(),
+                     'Large': args.args.large,
+                     'ngf': args.ngf,
+                     'batch_size': args.batch_size,
+                     'ndf': args.ndf,
+                     'numG': args.numG,
+                     },
+                     filename=model_path+'Last_D_epoch%d.pth.tar' \
+                     % epoch)
 
 
 
@@ -374,15 +400,10 @@ def vis_result(data, target, output, epoch, mode='val'):
     img_list = [np.concatenate(img_list[4*i:4*(i+1)], axis=1) for i in range(len(img_list) // 4)]
     img_list = np.concatenate(img_list, axis=0)
 
-    plt.figure(figsize=(36,27))
-    plt.imshow(img_list)
-    plt.axis('off')
-    plt.tight_layout()
     if mode=='val':
-        plt.savefig(img_path + 'epoch%d_val.png' % epoch)
+        matplotlib.image.imsave(img_path + 'epoch%d_val.png' % epoch)
     else:
-        plt.savefig(img_path + 'epoch%d_train.png' % epoch)
-    plt.clf()
+        matplotlib.image.imsave(img_path + 'epoch%d_train.png' % epoch)
 
 if __name__ == '__main__':
     main()
