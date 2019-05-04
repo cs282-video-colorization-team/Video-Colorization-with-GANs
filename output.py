@@ -26,6 +26,7 @@ if __name__ == '__main__':
 	with torch.no_grad(): # Fuck torch.no_grad!! Gradient will accumalte if you don't set torch.no_grad()!!
 		for i, (data, target) in enumerate(val_loader):
 			data, target = Variable(data.cuda()), Variable(target.cuda())
+			print(data.shape)
 			fake =  model_G(data).data
 			for i in range(val_bs):
 				# validate with fake
