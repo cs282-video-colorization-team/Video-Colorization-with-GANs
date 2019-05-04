@@ -87,9 +87,7 @@ def main():
                 _now, _prev, _next = Variable(_now), Variable(_prev), Variable(_next)
 
                 # validate with fake
-                fake, fake_lab =  model_G(_now, _prev, _next)
-
-                fake = fake.data
+                fake =  model_G(_now, _prev, _next).data
 
                 for j in range(val_bs):
 
