@@ -275,7 +275,7 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
         errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
         errG_L1_lab = L1(fake_lab.view(fake_lab.size(0),-1), target_lab.view(target_lab.size(0),-1))
 
-        errG = errG_GAN + args.lamb * (errG_L1 + errG_L1_lab)
+        errG = errG_GAN + args.lamb * (0.7 * errG_L1 + 0.3 * errG_L1_lab)
         errG.backward()
         D_G_x2 = output.data.mean()
         optimizer_G.step()
