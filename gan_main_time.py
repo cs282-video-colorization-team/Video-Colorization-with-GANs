@@ -51,7 +51,6 @@ parser.add_argument('--ndf', default=32, type=int,
                     help='# of discrim filters in first conv layer')
 
 parser.add_argument('--numG', default=5, type=int, help='G trains numG times when D trains per time')
-parser.add_argument('--patchGAN', action='store_true', help='Use patchGAN in Discriminator')
 
 # parser.add_argument('-p', '--plot', action="store_true",
 #                     help='Plot accuracy and loss diagram?')
@@ -63,15 +62,12 @@ parser.add_argument('--gpu', default=0, type=int,
 def main():
     global args, date
     args = parser.parse_args()
-    date = str(datetime.datetime.now())
+    date = str(datetime.datetime.now()).replace(':', '_').replace(' ', '_').replace('.', '_')
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
     model_G = ConvGenTime(args.ngf)
-    if args.patchGAN:
-        model_D = PatchDis(large=args.large, ndf=args.ndf)
-    else:
-        model_D = ConvDis(large=args.large, ndf=args.ndf)
+    model_D = ConvDis(large=args.large, ndf=args.ndf)
 
     start_epoch_G = start_epoch_D = 0
     if args.model_G:
@@ -139,11 +135,11 @@ def main():
 
     global img_path
     size = ''
-    if args.large: size = '_Large'
-    img_path = 'img/%s/GAN_%s_%dL1_bs%d_%s_lr%s/' \
-               % (date, size, args.lamb, args.batch_size, 'Adam', str(args.lr))
-    model_path = 'model/%s/GAN_%s_%dL1_bs%d_%s_lr%s/' \
-               % (date, size, args.lamb, args.batch_size, 'Adam', str(args.lr))
+    if args.large: size = 'Large'
+    img_path = 'img/%s/GAN_%s_L1%d_bs%d_%s_lr%s_ngf%d_ndf%d_numG%d/' \
+               % (date, size, args.lamb, args.batch_size, 'Adam', str(args.lr), args.ngf, args.ndf, args.numG)
+    model_path = 'model/%s/GAN_%s_L1%d_bs%d_%s_lr%s_ngf%d_ndf%d_numG%d/' \
+               % (date, size, args.lamb, args.batch_size, 'Adam', str(args.lr), args.ngf, args.ndf, args.numG)
     if not os.path.exists(img_path):
         os.makedirs(img_path)
     if not os.path.exists(model_path):
@@ -308,7 +304,7 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
             errD_real = criterion(torch.squeeze(output), labelv)
 
             # validate with fake
-            fake =  model_G(_now, _prev, _next)
+            fake, fake_lab =  model_G(_now, _prev, _next)
             labelv = Variable(label.fill_(fake_label))
             output = model_D(fake.detach())
             errD_fake = criterion(torch.squeeze(output), labelv)
@@ -322,8 +318,9 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
             output = model_D(fake)
             errG_GAN = criterion(torch.squeeze(output), labelv)
             errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
+            errG_L1_lab = L1(fake_lab.view(fake_lab.size(0),-1), target_lab.view(target_lab.size(0),-1))
 
-            errG = errG_GAN + args.lamb * errG_L1
+            errG = errG_GAN + args.lamb * (errG_L1 + errG_L1_lab)
 
             errorG.update(errG, target.size(0), history=1)
             errorD.update(errD, target.size(0), history=1)

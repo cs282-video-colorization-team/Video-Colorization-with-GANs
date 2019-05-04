@@ -63,6 +63,7 @@ def get_movie_time_loader(image_path, batch_size=16, mode='train', start_index =
     transform_gray = []
     transform_gray.append(transforms.Grayscale())
     transform_gray.append(transforms.ToTensor())
+    transform_gray.append(transforms.Normalize(mean=[0.5], std=[0.5]))
     transform_gray = transforms.Compose(transform_gray)
 
     if mode == 'train' or mode == 'val':
