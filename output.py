@@ -10,8 +10,9 @@ import matplotlib
 
  
 if __name__ == '__main__':
+	Large = False
 	ngf = 64
-	PATH = 'G_epoch0.pth.tar'
+	PATH = 'G_epoch13.pth.tar'
 
 	save_path = 'output'
 	ori_path = 'demoOriginal'
@@ -23,7 +24,7 @@ if __name__ == '__main__':
 
 	val_loader = get_loader(os.path.join(ori_path, 'data/'),
 		batch_size=16,
-		large=True,
+		large=Large,
 		mode='val',
 		num_workers=4,
 		)
