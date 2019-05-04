@@ -129,6 +129,7 @@ def main():
                              mode='train',
                              start_index = 1,
                              num_workers=4,
+                             shuffle=True
                             )
 
     val_loader = get_movie_time_loader(os.path.join(data_root, 'val/'),
@@ -136,6 +137,7 @@ def main():
                             mode='val',
                             start_index = 10000,
                             num_workers=4,
+                            shuffle=True
                             )
 
     global val_bs

@@ -60,7 +60,7 @@ class MovieTime(Dataset):
     def __len__(self):
         return len(self.data_files_name)
 
-def get_movie_time_loader(image_path, batch_size=16, mode='train', start_index = 1, num_workers=1):
+def get_movie_time_loader(image_path, batch_size=16, mode='train', start_index = 1, num_workers=1, shuffle=True):
 
     transform_gray = []
     transform_gray.append(transforms.Grayscale())
@@ -80,7 +80,7 @@ def get_movie_time_loader(image_path, batch_size=16, mode='train', start_index =
 
     data_loader = data.DataLoader(dataset=dataset,
                                   batch_size=batch_size,
-                                  shuffle=(mode=='train'),
+                                  shuffle=shuffle,
                                   num_workers=num_workers,
                                   drop_last=True)
 
