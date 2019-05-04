@@ -22,8 +22,8 @@ parser.add_argument('--modelpath', type=str,
     help='Model Root path')
 parser.add_argument('--time', type=str,
     help='baseline or with time', choices=['baseline', 'time'])
-parser.add_argument('--mode', default='val', type=str,
-    help='Mode of dataloader, if only gray image, choose test, else val', choices=['val','test'])
+# parser.add_argument('--mode', default='val', type=str,
+#     help='Mode of dataloader, if only gray image, choose test, else val', choices=['val','test'])
 
  
 def main():
@@ -43,25 +43,26 @@ def main():
 
     model_G.eval()
 
+    val_bs = checkpoint_G['batch_size']
+
     if args.time=='baseline':
         val_loader = get_loader(ori_path,
-            batch_size=checkpoint_G['batch_size'],
+            batch_size=val_bs,
             large=Large,
-            mode=args.mode,
+            mode='test',
             num_workers=4,
             )
     else:
         val_loader = get_movie_time_loader(ori_path,
-            batch_size=checkpoint_G['batch_size'],
-            mode=args.mode,
+            batch_size=val_bs,
+            mode='test',
             start_index = 1,
             num_workers=4,
             )
-    val_bs = val_loader.batch_size
-    cnt = 1
+
     with torch.no_grad(): # Fuck torch.no_grad!! Gradient will accumalte if you don't set torch.no_grad()!!
         if args.time=='baseline':
-            for i, (data, target) in enumerate(val_loader):
+            for i, (data, filename) in enumerate(val_loader):
                 data, target = Variable(data), Variable(target)
                 # print(data.shape)
                 fake =  model_G(data).data
@@ -70,13 +71,11 @@ def main():
                     # #method 1
                     # transform = transforms.Compose([transforms.ToPILImage(), transforms.Resize(size=(360,480)), transforms.ToTensor()]);tmp_img = transform(fake[i])
                     # torchvision.utils.save_image(tmp_img, 'output/'+ '%05d.png' %(cnt))
-                    # cnt += 1
 
                     # #method 2
                     p = transforms.ToPILImage()(fake[i].cpu())
                     p = p.resize((480,360))
-                    p.save('output/'+ '%05d.png' %(cnt))
-                    cnt += 1
+                    p.save(save_path + filename)
         else:
             for i, (_now, _prev, _next, target, target_lab) in enumerate(val_loader):
                 _now, _prev, _next, target, target_lab = Variable(_now), Variable(_prev), Variable(_next), Variable(target), Variable(target_lab)
@@ -88,8 +87,7 @@ def main():
 
                     p = transforms.ToPILImage()(fake[i].cpu())
                     p = p.resize((480,360))
-                    p.save('output/'+ '%05d.png' %(cnt))
-                    cnt += 1
+                    p.save(save_path + filename)
 
 
 
