@@ -289,7 +289,7 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
             optimizer_G.step()
 
         # store error values
-        if (i % args.numG) == 0:
+        if (i % max(args.numG, args.numD)) == 0:
             errorG.update(errG, target.size(0), history=1)
             errorD.update(errD, target.size(0), history=1)
             errorG_basic.update(errG, target.size(0), history=1)
