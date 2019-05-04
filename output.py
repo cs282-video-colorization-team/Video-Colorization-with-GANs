@@ -43,12 +43,17 @@ if __name__ == '__main__':
 				# new_im = Image.fromarray(pred_rgb)
 				# new_im.save("numpy_altered_sample2.png" % )
 				# pred_rgb = pred_rgb.resize((480,360))
-				print("pred shape: ", pred_rgb.shape)
-				plt.figure(figsize=(480,360))
-				plt.imshow(pred_rgb)
-				plt.axis('off')
-				plt.tight_layout()
-				plt.savefig(save_path+ '%05d.png' %(cnt))
+				# print("pred shape: ", pred_rgb.shape)
+				# plt.figure(figsize=(480,360))
+				# plt.imshow(pred_rgb)
+				# plt.axis('off')
+				# plt.tight_layout()
+				# plt.savefig(save_path+ '%05d.png' %(cnt))
 				# print(os.path.join(save_path, '%05d.png'))
 				# pred_rgb.save("output/", '%05d.png' %(cnt))
+
+				im = Image.fromarray(pred_rgb)
+				im.save("your_file.jpeg")
+				im.save('output/'+ '%05d.png' %(cnt))
+				cnt+=1
 
