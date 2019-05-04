@@ -30,6 +30,7 @@ if __name__ == '__main__':
 			data, target = Variable(data), Variable(target)
 			print(data.shape)
 			fake =  model_G(data).data
+			print("fake shape: ", fake.shape)
 			for i in range(val_bs):
 				# validate with fake
 				pred = fake[i].cpu().numpy()
