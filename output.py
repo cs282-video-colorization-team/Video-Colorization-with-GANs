@@ -66,8 +66,7 @@ def main():
         val_loader = get_movie_time_loader(ori_path,
             batch_size=val_bs,
             mode='test',
-            num_workers=4,
-            is_color=False,
+            num_workers=4, 
             start_index=args.start_index,
             is_color=args.is_color
             )
