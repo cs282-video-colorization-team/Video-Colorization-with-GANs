@@ -37,3 +37,5 @@ if __name__ == '__main__':
 				plt.axis('off')
 				plt.tight_layout()
 				plt.savefig(os.path.join(data_root, '%05d.png'))
+				print(os.path.join(data_root, '%05d.png'))
+				pred_rgb.save(os.path.join(data_root, '%05d.png'))
