@@ -170,12 +170,12 @@ def main():
         plotter.val_update(val_errG, val_errD)
         plotter.draw(img_path + 'train_val.png')
 
-        if args.save and (epoch % 10 == 9):
+        if args.save and (epoch % 10 == 1):
             print('Saving check point')
             save_checkpoint({'epoch': epoch + 1,
                              'state_dict': model_G.state_dict(),
                              'optimizer': optimizer_G.state_dict(),
-                             'Large': args.args.large,
+                             'Large': args.large,
                              'ngf': args.ngf,
                              'batch_size': args.batch_size,
                              'ndf': args.ndf,
@@ -189,7 +189,7 @@ def main():
     save_checkpoint({'epoch': epoch + 1,
                              'state_dict': model_G.state_dict(),
                              'optimizer': optimizer_G.state_dict(),
-                             'Large': args.args.large,
+                             'Large': args.large,
                              'ngf': args.ngf,
                              'batch_size': args.batch_size,
                              'ndf': args.ndf,
@@ -201,7 +201,7 @@ def main():
     save_checkpoint({'epoch': epoch + 1,
                      'state_dict': model_D.state_dict(),
                      'optimizer': optimizer_D.state_dict(),
-                     'Large': args.args.large,
+                     'Large': args.large,
                      'ngf': args.ngf,
                      'batch_size': args.batch_size,
                      'ndf': args.ndf,

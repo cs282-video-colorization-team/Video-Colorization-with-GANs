@@ -167,6 +167,8 @@ def main():
         print('Epoch {}/{}'.format(epoch, args.num_epoch - 1))
         print('-' * 20)
 
+        if epoch == 0:
+            val_lerrG, val_errD = validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch=-1)
         # train
         train_errG, train_errD = train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, iteration)
         # validate
@@ -176,12 +178,12 @@ def main():
         plotter.val_update(val_lerrG, val_errD)
         plotter.draw(img_path + 'train_val.png')
 
-        if args.save and (epoch % 10 == 9):
+        if args.save and (epoch % 10 == 1):
             print('Saving check point')
             save_checkpoint({'epoch': epoch + 1,
                              'state_dict': model_G.state_dict(),
                              'optimizer': optimizer_G.state_dict(),
-                             'Large': args.args.large,
+                             'Large': args.large,
                              'ngf': args.ngf,
                              'batch_size': args.batch_size,
                              'ndf': args.ndf,
@@ -196,7 +198,7 @@ def main():
     save_checkpoint({'epoch': epoch + 1,
                      'state_dict': model_G.state_dict(),
                      'optimizer': optimizer_G.state_dict(),
-                     'Large': args.args.large,
+                     'Large': args.large,
                      'ngf': args.ngf,
                      'batch_size': args.batch_size,
                      'ndf': args.ndf,
@@ -210,7 +212,7 @@ def main():
     save_checkpoint({'epoch': epoch + 1,
                      'state_dict': model_D.state_dict(),
                      'optimizer': optimizer_D.state_dict(),
-                     'Large': args.args.large,
+                     'Large': args.large,
                      'ngf': args.ngf,
                      'batch_size': args.batch_size,
                      'ndf': args.ndf,
