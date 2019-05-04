@@ -63,6 +63,8 @@ def main():
     with torch.no_grad(): # Fuck torch.no_grad!! Gradient will accumalte if you don't set torch.no_grad()!!
         if args.time=='baseline':
             for i, (data, filename) in enumerate(val_loader):
+                print("filename:", filename)
+                print("filename type:", type(filename))
                 data = Variable(data)
                 # print(data.shape)
                 fake =  model_G(data).data
@@ -75,7 +77,7 @@ def main():
                     # #method 2
                     p = transforms.ToPILImage()(fake[i].cpu())
                     p = p.resize((480,360))
-                    p.save(save_path + filename)
+                    p.save(save_path + filename[0])
         else:
             for i, (_now, _prev, _next, filename) in enumerate(val_loader):
                 _now, _prev, _next = Variable(_now), Variable(_prev), Variable(_next)
