@@ -2,7 +2,7 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import spectral_norm as SpectralNorm
+from spectral_norm import SpectralNorm
 
 class ConvGenTime(nn.Module):
     '''Generator'''
@@ -273,3 +273,37 @@ class PatchDis(nn.Module):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
                 m.weight.data.normal_(0, math.sqrt(2. / n))
 
+class Discriminator(nn.Module):
+    def __init__(self):
+        super(Discriminator, self).__init__()
+
+        def init_conv(insize, outsize, kernel_size, stride, padding):
+            m = nn.Conv2d(insize, outsize, kernel_size, stride=stride, padding=padding)
+            n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+            m.weight.data.normal_(0, math.sqrt(2. / n))
+            return m
+
+        self.conv1 = SpectralNorm(init_conv(3, 64, 3, stride=1, padding=(1,1)))
+
+        self.conv2 = SpectralNorm(init_conv(64, 64, 4, stride=2, padding=(1,1)))
+        self.conv3 = SpectralNorm(init_conv(64, 128, 3, stride=1, padding=(1,1)))
+        self.conv4 = SpectralNorm(init_conv(128, 128, 4, stride=2, padding=(1,1)))
+        self.conv5 = SpectralNorm(init_conv(128, 256, 3, stride=1, padding=(1,1)))
+        self.conv6 = SpectralNorm(init_conv(256, 256, 4, stride=2, padding=(1,1)))
+        self.conv7 = SpectralNorm(init_conv(256, 512, 3, stride=1, padding=(1,1)))
+
+        self.fc = SpectralNorm(nn.Linear(4* 4 * 512, 1))
+
+    def forward(self, x):
+        leak = 0.1
+        w_g = 4
+        m = x
+        m = nn.LeakyReLU(leak)(self.conv1(m))
+        m = nn.LeakyReLU(leak)(self.conv2(m))
+        m = nn.LeakyReLU(leak)(self.conv3(m))
+        m = nn.LeakyReLU(leak)(self.conv4(m))
+        m = nn.LeakyReLU(leak)(self.conv5(m))
+        m = nn.LeakyReLU(leak)(self.conv6(m))
+        m = nn.LeakyReLU(leak)(self.conv7(m))
+
+        return self.fc(m.view(-1,w_g * w_g * 512))
