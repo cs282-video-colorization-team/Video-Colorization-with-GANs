@@ -2,7 +2,45 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import spectral_norm as SpectralNorm
+from spectral_norm import SpectralNorm
+import numpy as np
+from torch.autograd import Variable
+
+class GANLoss(nn.Module):
+    def __init__(self, use_lsgan=True, target_real_label=1.0, target_fake_label=0.0,
+                 tensor=torch.FloatTensor):
+        super(GANLoss, self).__init__()
+        self.real_label = target_real_label
+        self.fake_label = target_fake_label
+        self.real_label_var = None
+        self.fake_label_var = None
+        self.Tensor = tensor
+        if use_lsgan:
+            self.loss = nn.MSELoss()
+        else:
+            self.loss = nn.BCELoss()
+
+    def get_target_tensor(self, input, target_is_real):
+        target_tensor = None
+        if target_is_real:
+            create_label = ((self.real_label_var is None) or
+                            (self.real_label_var.numel() != input.numel()))
+            if create_label:
+                real_tensor = self.Tensor(input.size()).fill_(self.real_label)
+                self.real_label_var = Variable(real_tensor, requires_grad=False)
+            target_tensor = self.real_label_var
+        else:
+            create_label = ((self.fake_label_var is None) or
+                            (self.fake_label_var.numel() != input.numel()))
+            if create_label:
+                fake_tensor = self.Tensor(input.size()).fill_(self.fake_label)
+                self.fake_label_var = Variable(fake_tensor, requires_grad=False)
+            target_tensor = self.fake_label_var
+        return target_tensor
+
+    def __call__(self, input, target_is_real):
+        target_tensor = self.get_target_tensor(input, target_is_real)
+        return self.loss(input, target_tensor)
 
 class ConvGenTime(nn.Module):
     '''Generator'''
@@ -221,55 +259,48 @@ class PatchDis(nn.Module):
     def __init__(self, large=False, ndf=32):
         super(PatchDis, self).__init__()
 
-        self.conv1 = nn.Conv2d(3, ndf, kernel_size=4, stride=2, padding=1)
-        self.sn1 = SpectralNorm(self.conv1)
+        def init_conv(insize, outsize, kernel_size, stride, padding, bias=True):
+            m = nn.Conv2d(insize, outsize, kernel_size, stride=stride, padding=padding, bias=bias)
+            n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+            m.weight.data.normal_(0, math.sqrt(2. / n))
+            return m
+
+        self.conv1 = SpectralNorm(init_conv(ndf*8, 1, kernel_size=4, stride=1, padding=1))
+
+        self.conv1 = SpectralNorm(init_conv(3, ndf, kernel_size=4, stride=2, padding=1))
         self.relu1 = nn.LeakyReLU(0.01, inplace=True)
 
-        self.conv2 = nn.Conv2d(ndf, ndf*2, kernel_size=4, stride=2, padding=1)
-        self.sn2 = SpectralNorm(self.conv2)
+        self.conv2 = SpectralNorm(init_conv(ndf, ndf*2, kernel_size=4, stride=2, padding=1))
         self.relu2 = nn.LeakyReLU(0.01, inplace=True)
 
-        self.conv3 = nn.Conv2d(ndf*2, ndf*4, kernel_size=4, stride=2, padding=1)
-        self.sn3 = SpectralNorm(self.conv3)
+        self.conv3 = SpectralNorm(init_conv(ndf*2, ndf*4, kernel_size=4, stride=2, padding=1))
         self.relu3 = nn.LeakyReLU(0.01, inplace=True)
 
-        self.conv4 = nn.Conv2d(ndf*4, ndf*8, kernel_size=4, stride=1, padding=1)
-        self.sn4 = SpectralNorm(self.conv4)
+        self.conv4 = SpectralNorm(init_conv(ndf*4, ndf*8, kernel_size=4, stride=1, padding=1))
         self.relu4 = nn.LeakyReLU(0.01, inplace=True)
 
-        self.conv5 = nn.Conv2d(ndf*8, 1, kernel_size=4, stride=1, padding=1, bias=False)
-        self.sn5 = SpectralNorm(self.conv5)
-
-        self._initialize_weights()
-
+        self.conv5 = SpectralNorm(init_conv(ndf*8, 1, kernel_size=4, stride=1, padding=1, bias=False))
+        
     def forward(self, x):
+        # h = self.main(x)
+        # output = self.conv1(h)
         h = self.conv1(x)
-        h = self.sn1(h)
+        h = self.conv1(x)
         h = self.relu1(h)
 
+        #h = self.conv2(h)
         h = self.conv2(h)
-        h = self.sn2(h)
         h = self.relu2(h)
 
+        #h = self.conv3(h)
         h = self.conv3(h)
-        h = self.sn3(h)
         h = self.relu3(h)
 
+        #h = self.conv4(h)
         h = self.conv4(h)
-        h = self.sn4(h)
         h = self.relu4(h)
 
+        #h = self.conv5(h)
         h = self.conv5(h)
-        h = self.sn5(h)
 
         return h.squeeze()
-
-    def _initialize_weights(self):
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, math.sqrt(2. / n))
-            if isinstance(m, nn.ConvTranspose2d):
-                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, math.sqrt(2. / n))
-

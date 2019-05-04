@@ -8,6 +8,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
 from torch.utils import data
+import torch.nn.init as init
 import torch.nn.functional as F
 import torchvision
 from torchvision import datasets, models, transforms
@@ -52,6 +53,7 @@ parser.add_argument('--ndf', default=32, type=int,
 
 parser.add_argument('--numG', default=5, type=int, help='G trains numG times when D trains per time')
 parser.add_argument('--patchGAN', action='store_true', help='Use patchGAN in Discriminator')
+parser.add_argument('--use_lsgan', action='store_true', help='Use LSGAN in loss criterion')
 
 # parser.add_argument('-p', '--plot', action="store_true",
 #                     help='Plot accuracy and loss diagram?')
@@ -59,6 +61,7 @@ parser.add_argument('-s','--save', action="store_true",
                     help='Save model?')
 parser.add_argument('--gpu', default=0, type=int,
                     help='Which GPU to use?')
+
 
 def main():
     global args, date
@@ -105,8 +108,10 @@ def main():
         optimizer_D.load_state_dict(checkpoint_D['optimizer'])
 
     # loss function
-    global criterion
-    criterion = nn.BCELoss()
+    global criterionGAN
+    #criterion = nn.BCELoss()
+    criterionGAN = gan_model_time.GANLoss(use_lsgan=args.use_lsgan, tensor =torch.cuda.FloatTensor)
+
     global L1
     L1 = nn.L1Loss()
 
@@ -209,17 +214,19 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
         if (i % args.numG) == 0:
             model_D.zero_grad()
             output = model_D(target)
-            label = torch.FloatTensor(target.size(0)).fill_(real_label).cuda()
-            labelv = Variable(label)
-            errD_real = criterion(torch.squeeze(output), labelv)
+            #label = torch.FloatTensor(target.size(0)).fill_(real_label).cuda()
+            #labelv = Variable(label)
+            #errD_real = criterion(torch.squeeze(output), labelv)
+            errD_real = criterionGAN(output, True)
             errD_real.backward()
             D_x = output.data.mean()
 
             # train with fake
             fake, _ =  model_G(_now, _prev, _next)
-            labelv = Variable(label.fill_(fake_label))
+            #labelv = Variable(label.fill_(fake_label))
             output = model_D(fake.detach())
-            errD_fake = criterion(torch.squeeze(output), labelv)
+            #errD_fake = criterion(torch.squeeze(output), labelv)
+            errD_fake = criterionGAN(output, False)
             errD_fake.backward()
             D_G_x1 = output.data.mean()
 
@@ -230,11 +237,12 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
         # update G network
         ########################
 
-        labelv = Variable(label.fill_(real_label))
+        #labelv = Variable(label.fill_(real_label))
         fake, fake_lab = model_G(_now, _prev, _next)
         model_G.zero_grad()
         output = model_D(fake)
-        errG_GAN = criterion(torch.squeeze(output), labelv)
+        #errG_GAN = criterion(torch.squeeze(output), labelv)
+        errG_GAN = criterionGAN(output, True)
         errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
         errG_L1_lab = L1(fake_lab.view(fake_lab.size(0),-1), target_lab.view(target_lab.size(0),-1))
 
