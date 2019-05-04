@@ -39,7 +39,7 @@ if __name__ == '__main__':
 			for i in range(val_bs):
 				# validate with fake
 				pred = fake[i].cpu().numpy()
-				print (type(pred))
+				# print (type(pred))
 
 				pred_rgb = (np.transpose(pred, (1,2,0)).astype(np.float64) + 1) / 2.
 
