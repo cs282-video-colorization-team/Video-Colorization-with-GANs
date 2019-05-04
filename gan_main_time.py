@@ -56,7 +56,7 @@ parser.add_argument('--ndf', default=32, type=int,
                     help='# of discrim filters in first conv layer')
 
 parser.add_argument('--numG', default=1, type=int, help='G trains numG times when D trains per time')
-parser.add_argument('--numD' default=1, type=int, help='D trains numD times when G trains per time')
+parser.add_argument('--numD', default=1, type=int, help='D trains numD times when G trains per time')
 parser.add_argument('--patchGAN', action='store_true', help='Use patchGAN in Discriminator')
 parser.add_argument('--use_lsgan', action='store_true', help='Use LSGAN in loss criterion')
 
@@ -291,7 +291,7 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
             optimizer_G.step()
 
         # store error values
-        if (i % args.numG) == 0:
+        if (i % max(args.numG, args.numD)) == 0:
             errorG.update(errG, target.size(0), history=1)
             errorD.update(errD, target.size(0), history=1)
             errorG_basic.update(errG, target.size(0), history=1)
@@ -310,7 +310,7 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
             print('Epoch%d[%d/%d]: Loss_D: %.4f(R%0.4f+F%0.4f) Loss_G: %0.4f(GAN%.4f+RGB%0.4f+Lab%0.4f) Raw RGB: %.4f D(x): %.3f D(G(z)): %.3f / %.3f' \
                 % (epoch, i, len(train_loader),
                 errorD_basic.avg, errorD_real.avg, errorD_fake.avg,
-                errorG_basic.avg, errorG_GAN.avg, errorG_R.avg * 0.7 * args.lamb, errorG_L1_lab * 0.3 * args.lamb, errorG_R.avg,
+                errorG_basic.avg, errorG_GAN.avg, errorG_R.avg * 0.7 * args.lamb, errorG_L1_lab.avg * 0.3 * args.lamb, errorG_R.avg,
                 D_x, D_G_x1, D_G_x2
                 ))
             # plot image
