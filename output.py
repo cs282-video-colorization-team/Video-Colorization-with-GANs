@@ -33,7 +33,7 @@ def main():
     PATH = args.modelpath
 
     save_path = args.savepath
-    ori_path = arg.path
+    ori_path = args.path
 
     checkpoint_G = torch.load(PATH)
     ngf = checkpoint_G['ngf']
@@ -59,7 +59,7 @@ def main():
             start_index = 1,
             num_workers=4,
             )
-
+        
     with torch.no_grad(): # Fuck torch.no_grad!! Gradient will accumalte if you don't set torch.no_grad()!!
         if args.time=='baseline':
             for i, (data, filename) in enumerate(val_loader):
