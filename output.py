@@ -59,16 +59,14 @@ def main():
             batch_size=val_bs,
             large=Large,
             mode='test',
-            num_workers=4,
-            is_color=args.is_color
+            num_workers=4
             )
     else:
         val_loader = get_movie_time_loader(ori_path,
             batch_size=val_bs,
             mode='test',
             num_workers=4, 
-            start_index=args.start_index,
-            is_color=args.is_color
+            start_index=args.start_index
             )
         
     with torch.no_grad(): # Fuck torch.no_grad!! Gradient will accumalte if you don't set torch.no_grad()!!
