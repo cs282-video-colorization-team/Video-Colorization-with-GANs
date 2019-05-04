@@ -4,6 +4,8 @@ from torchvision import transforms
 from torch.utils import data
 from torch.utils.data import Dataset
 from PIL import Image
+from skimage.color import rgb2lab
+import numpy as np
 
 class MovieTime(Dataset):
     def __init__(self, image_path, transform_color, transform_gray, mode, start_index):
@@ -44,10 +46,14 @@ class MovieTime(Dataset):
         image_next = Image.open(os.path.join(self.image_path + next_file_name))
         image_next = image_next.resize(self.IMAGE_RESIZE)
 
-        if self.mode == 'train':
-            return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next), self.transform_color(image_now)
+        # image color space in LAB
+        image_now_lab = rgb2lab(np.asarray(image_now))
+        image_now_lab = Image.fromarray(np.uint8(image_now_lab))
+
+        if self.mode == 'train': 
+            return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next), self.transform_color(image_now), self.transform_color(image_now_lab)
         elif self.mode == 'val':
-            return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next), self.transform_color(image_now)
+            return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next), self.transform_color(image_now), self.transform_color(image_now_lab)
         elif self.mode == 'test':
             return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next)
 
@@ -59,6 +65,7 @@ def get_movie_time_loader(image_path, batch_size=16, mode='train', start_index =
     transform_gray = []
     transform_gray.append(transforms.Grayscale())
     transform_gray.append(transforms.ToTensor())
+    transform_gray.append(transforms.Normalize(mean=[0.5], std=[0.5]))
     transform_gray = transforms.Compose(transform_gray)
 
     if mode == 'train' or mode == 'val':

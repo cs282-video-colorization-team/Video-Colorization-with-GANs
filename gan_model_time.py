@@ -2,6 +2,46 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from spectral_norm import SpectralNorm
+import numpy as np
+from torch.autograd import Variable
+
+class GANLoss(nn.Module):
+    def __init__(self, use_lsgan=True, target_real_label=1.0, target_fake_label=0.0,
+                 tensor=torch.FloatTensor):
+        super(GANLoss, self).__init__()
+        self.real_label = target_real_label
+        self.fake_label = target_fake_label
+        self.real_label_var = None
+        self.fake_label_var = None
+        self.Tensor = tensor
+        if use_lsgan:
+            self.loss = nn.MSELoss()
+        else:
+            self.loss = nn.BCELoss()
+
+    def get_target_tensor(self, input, target_is_real):
+        target_tensor = None
+        if target_is_real:
+            create_label = ((self.real_label_var is None) or
+                            (self.real_label_var.numel() != input.numel()))
+            if create_label:
+                real_tensor = self.Tensor(input.size()).fill_(self.real_label)
+                self.real_label_var = Variable(real_tensor, requires_grad=False)
+            target_tensor = self.real_label_var
+        else:
+            create_label = ((self.fake_label_var is None) or
+                            (self.fake_label_var.numel() != input.numel()))
+            if create_label:
+                fake_tensor = self.Tensor(input.size()).fill_(self.fake_label)
+                self.fake_label_var = Variable(fake_tensor, requires_grad=False)
+            target_tensor = self.fake_label_var
+        return target_tensor
+
+    def __call__(self, input, target_is_real):
+        target_tensor = self.get_target_tensor(input, target_is_real)
+        return self.loss(input, target_tensor)
+
 
 class ConvGenTime(nn.Module):
     '''Generator'''
@@ -9,52 +49,52 @@ class ConvGenTime(nn.Module):
         super(ConvGenTime, self).__init__()
 
         self.conv1 = nn.Conv2d(1, ngf, 3, stride=2, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(ngf)
+        self.bn1 = nn.InstanceNorm2d(ngf, affine=True)
         self.relu1 = nn.LeakyReLU(0.1)
 
         self.conv2 = nn.Conv2d(ngf, ngf*2, 3, stride=2, padding=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(ngf*2)
+        self.bn2 = nn.InstanceNorm2d(ngf*2, affine=True)
         self.relu2 = nn.LeakyReLU(0.1)
 
         self.conv3 = nn.Conv2d(ngf*2, ngf*4, 3, stride=2, padding=1, bias=False)
-        self.bn3 = nn.BatchNorm2d(ngf*4)
+        self.bn3 = nn.InstanceNorm2d(ngf*4, affine=True)
         self.relu3 = nn.LeakyReLU(0.1)
 
         self.conv4 = nn.Conv2d(ngf*4, ngf*8, 3, stride=2, padding=1, bias=False)
-        self.bn4 = nn.BatchNorm2d(ngf*8)
+        self.bn4 = nn.InstanceNorm2d(ngf*8, affine=True)
         self.relu4 = nn.LeakyReLU(0.1)
 
         self.conv5 = nn.Conv2d(ngf*8, ngf*8, 3, stride=2, padding=1, bias=False)
-        self.bn5 = nn.BatchNorm2d(ngf*8)
+        self.bn5 = nn.InstanceNorm2d(ngf*8, affine=True)
         self.relu5 = nn.LeakyReLU(0.1)
 
         # === 1x1 cov for prev, now, next
         self.conv1x1prev = nn.Conv2d(ngf*8, ngf, 1, stride=1, padding=0, bias=False)
         self.conv1x1now = nn.Conv2d(ngf*8, ngf*6, 1, stride=1, padding=0, bias=False)
         self.conv1x1next = nn.Conv2d(ngf*8, ngf, 1, stride=1, padding=0, bias=False)
-        self.bn1x1 = nn.BatchNorm2d(ngf*8)
+        self.bn1x1 = nn.InstanceNorm2d(ngf*8, affine=True)
         self.relu1x1 = nn.LeakyReLU(0.1)
         # ===
 
         self.deconv6 = nn.ConvTranspose2d(ngf*8, ngf*8, 3, stride=2, padding=1, output_padding=1, bias=False)
-        self.bn6 = nn.BatchNorm2d(ngf*8)
+        self.bn6 = nn.InstanceNorm2d(ngf*8, affine=True)
         self.relu6 = nn.ReLU()
 
         self.deconv7 = nn.ConvTranspose2d(ngf*8, ngf*4, 3, stride=2, padding=1, output_padding=1, bias=False)
-        self.bn7 = nn.BatchNorm2d(ngf*4)
+        self.bn7 = nn.InstanceNorm2d(ngf*4, affine=True)
         self.relu7 = nn.ReLU()
 
         self.deconv8 = nn.ConvTranspose2d(ngf*4, ngf*2, 3, stride=2, padding=1, output_padding=1, bias=False)
-        self.bn8 = nn.BatchNorm2d(ngf*2)
+        self.bn8 = nn.InstanceNorm2d(ngf*2, affine=True)
         self.relu8 = nn.ReLU()
 
         self.deconv9 = nn.ConvTranspose2d(ngf*2, ngf, 3, stride=2, padding=1, output_padding=1, bias=False)
-        self.bn9 = nn.BatchNorm2d(ngf)
+        self.bn9 = nn.InstanceNorm2d(ngf, affine=True)
         self.relu9 = nn.ReLU()
 
-        self.deconv10 = nn.ConvTranspose2d(ngf, 3, 3, stride=2, padding=1, output_padding=1, bias=False)
-        self.bn10 = nn.BatchNorm2d(3)
-        self.relu10 = nn.ReLU()
+        self.deconvRGB = nn.ConvTranspose2d(ngf, 3, 3, stride=2, padding=1, output_padding=1, bias=False)
+
+        self.deconvLAB = nn.ConvTranspose2d(ngf, 3, 3, stride=2, padding=1, output_padding=1, bias=False)
 
         self._initialize_weights()
 
@@ -193,14 +233,17 @@ class ConvGenTime(nn.Module):
         h = self.relu9(h) # 64,112,112
         h += pool1
 
-        h = self.deconv10(h)
-        h = F.tanh(h) # 3,224,224
+        rgb = self.deconvRGB(h)
+        rgb = F.tanh(rgb) # 3,224,224
+
+        lab = self.deconvLAB(h)
+        lab = F.tanh(lab) # 3,224,224
 
         # =========================
         # Step 4  -END- UNET decoder
         # =========================
 
-        return h
+        return rgb, lab
 
     def _initialize_weights(self):
         for m in self.modules():
@@ -210,3 +253,55 @@ class ConvGenTime(nn.Module):
             if isinstance(m, nn.ConvTranspose2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
                 m.weight.data.normal_(0, math.sqrt(2. / n))
+
+
+class PatchDis(nn.Module):
+    '''Discriminator'''
+    def __init__(self, large=False, ndf=32):
+        super(PatchDis, self).__init__()
+
+        def init_conv(insize, outsize, kernel_size, stride, padding, bias=True):
+            m = nn.Conv2d(insize, outsize, kernel_size, stride=stride, padding=padding, bias=bias)
+            n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+            m.weight.data.normal_(0, math.sqrt(2. / n))
+            return m
+
+        self.conv1 = SpectralNorm(init_conv(ndf*8, 1, kernel_size=4, stride=1, padding=1))
+
+        self.conv1 = SpectralNorm(init_conv(3, ndf, kernel_size=4, stride=2, padding=1))
+        self.relu1 = nn.LeakyReLU(0.01, inplace=True)
+
+        self.conv2 = SpectralNorm(init_conv(ndf, ndf*2, kernel_size=4, stride=2, padding=1))
+        self.relu2 = nn.LeakyReLU(0.01, inplace=True)
+
+        self.conv3 = SpectralNorm(init_conv(ndf*2, ndf*4, kernel_size=4, stride=2, padding=1))
+        self.relu3 = nn.LeakyReLU(0.01, inplace=True)
+
+        self.conv4 = SpectralNorm(init_conv(ndf*4, ndf*8, kernel_size=4, stride=1, padding=1))
+        self.relu4 = nn.LeakyReLU(0.01, inplace=True)
+
+        self.conv5 = SpectralNorm(init_conv(ndf*8, 1, kernel_size=4, stride=1, padding=1, bias=False))
+        
+    def forward(self, x):
+        # h = self.main(x)
+        # output = self.conv1(h)
+        h = self.conv1(x)
+        h = self.conv1(x)
+        h = self.relu1(h)
+
+        #h = self.conv2(h)
+        h = self.conv2(h)
+        h = self.relu2(h)
+
+        #h = self.conv3(h)
+        h = self.conv3(h)
+        h = self.relu3(h)
+
+        #h = self.conv4(h)
+        h = self.conv4(h)
+        h = self.relu4(h)
+
+        #h = self.conv5(h)
+        h = self.conv5(h)
+
+        return h.squeeze()
