@@ -56,7 +56,7 @@ parser.add_argument('--ndf', default=32, type=int,
                     help='# of discrim filters in first conv layer')
 
 parser.add_argument('--numG', default=1, type=int, help='G trains numG times when D trains per time')
-parser.add_argument('--numD' default=1, type=int, help='D trains numD times when G trains per time')
+parser.add_argument('--numD', default=1, type=int, help='D trains numD times when G trains per time')
 parser.add_argument('--patchGAN', action='store_true', help='Use patchGAN in Discriminator')
 parser.add_argument('--use_lsgan', action='store_true', help='Use LSGAN in loss criterion')
 
