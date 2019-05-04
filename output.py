@@ -43,7 +43,6 @@ if __name__ == '__main__':
 				# new_im = Image.fromarray(pred_rgb)
 				# new_im.save("numpy_altered_sample2.png" % )
 				# pred_rgb = pred_rgb.resize((480,360))
-				# print("pred shape: ", pred_rgb.shape)
 				# plt.figure(figsize=(480,360))
 				# plt.imshow(pred_rgb)
 				# plt.axis('off')
