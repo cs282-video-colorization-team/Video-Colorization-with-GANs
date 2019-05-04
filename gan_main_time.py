@@ -226,6 +226,7 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
     errorD_real = AverageMeter()
     errorD_fake = AverageMeter()
     errorG_GAN = AverageMeter()
+    errorG_L1_lab = AverageMeter()
     errorG_R = AverageMeter()
 
     model_G.train()
@@ -290,6 +291,7 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
             errorD_basic.update(errD, target.size(0), history=1)
             errorD_real.update(errD_real, target.size(0), history=1)
             errorD_fake.update(errD_fake, target.size(0), history=1)
+            errorG_L1_lab.update(errG_L1_lab, target.size(0), history=1)
 
             errorD_real.update(errD_real, target.size(0), history=1)
             errorD_fake.update(errD_fake, target.size(0), history=1)
@@ -301,10 +303,10 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
 
 
         if iteration % print_interval == 0:
-            print('Epoch%d[%d/%d]: Loss_D: %.4f(R%0.4f+F%0.4f) Loss_G: %0.4f(GAN%.4f+R%0.4f) D(x): %.4f D(G(z)): %.4f / %.4f' \
+            print('Epoch%d[%d/%d]: Loss_D: %.4f(R%0.4f+F%0.4f) Loss_G: %0.4f(GAN%.4f+RGB%0.4f+Lab%0.4f) Raw RGB: %.4f D(x): %.3f D(G(z)): %.3f / %.3f' \
                 % (epoch, i, len(train_loader),
                 errorD_basic.avg, errorD_real.avg, errorD_fake.avg,
-                errorG_basic.avg, errorG_GAN.avg, errorG_R.avg,
+                errorG_basic.avg, errorG_GAN.avg, errorG_R.avg * 0.7 * args.lamb, errorG_L1_lab * 0.3 * args.lamb, errorG_R.avg,
                 D_x, D_G_x1, D_G_x2
                 ))
             # plot image
@@ -318,6 +320,7 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
             errorD_fake.reset()
             errorG_GAN.reset()
             errorG_R.reset()
+            errorG_L1_lab.reset()
 
         iteration += 1
 
