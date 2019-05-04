@@ -41,13 +41,14 @@ class Movie(Dataset):
     def __len__(self):
         return len(self.data_files_name)
 
-def get_loader(image_path, batch_size=16, large=True, mode='train', num_workers=1):
+def get_loader(image_path, batch_size=16, large=True, mode='train', num_workers=1, is_color = True):
     # if large:
     #     crop = transforms.CenterCrop(480)
     # else:
     #     crop = transforms.CenterCrop(224)
     transform_gray = []
-    transform_gray.append(transforms.Grayscale())
+    if mode == 'test' and is_color == False:
+        transform_gray.append(transforms.Grayscale())
     # transform_gray.append(crop)
     transform_gray.append(transforms.ToTensor())
     transform_gray.append(transforms.Normalize(mean=[0.5], std=[0.5]))
