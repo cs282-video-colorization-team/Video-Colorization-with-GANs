@@ -331,7 +331,7 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
             errorD_fake.reset()
             errorG_GAN.reset()
             errorG_R.reset()
-            errorG_L1_lab.reset()
+            #errorG_L1_lab.reset()
 
         iteration += 1
 
