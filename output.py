@@ -47,8 +47,11 @@ if __name__ == '__main__':
 
 				# print(type(pred_rgb))
 				# print("pred shape: ", pred_rgb.shape)
+				im = Image.fromarray(pred_rgb, 'RGB')
 
-				matplotlib.image.imsave('output/'+ '%05d.png' %(cnt), pred_rgb)
+				im.save('output/'+ '%05d.png' %(cnt))
+
+				# matplotlib.image.imsave('output/'+ '%05d.png' %(cnt), pred_rgb)
 
 
 				# new_im = Image.fromarray(pred_rgb)
