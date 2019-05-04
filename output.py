@@ -63,7 +63,7 @@ def main():
     with torch.no_grad(): # Fuck torch.no_grad!! Gradient will accumalte if you don't set torch.no_grad()!!
         if args.time=='baseline':
             for i, (data, filename) in enumerate(val_loader):
-                data, target = Variable(data), Variable(target)
+                data = Variable(data)
                 # print(data.shape)
                 fake =  model_G(data).data
                 # print("fake shape: ", fake.shape)
@@ -77,8 +77,8 @@ def main():
                     p = p.resize((480,360))
                     p.save(save_path + filename)
         else:
-            for i, (_now, _prev, _next, target, target_lab) in enumerate(val_loader):
-                _now, _prev, _next, target, target_lab = Variable(_now), Variable(_prev), Variable(_next), Variable(target), Variable(target_lab)
+            for i, (_now, _prev, _next, filename) in enumerate(val_loader):
+                _now, _prev, _next = Variable(_now), Variable(_prev), Variable(_next)
 
                 # validate with fake
                 fake, fake_lab =  model_G(_now, _prev, _next).data
