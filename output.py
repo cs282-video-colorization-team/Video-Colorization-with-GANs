@@ -42,4 +42,4 @@ if __name__ == '__main__':
 				plt.tight_layout()
 				plt.savefig(os.path.join(save_path, '%05d.png'))
 				print(os.path.join(save_path, '%05d.png'))
-				pred_rgb.save(os.path.join(save_path, '%05d.png'))
+				pred_rgb.save("output/", '%05d.png')
