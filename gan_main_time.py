@@ -129,6 +129,7 @@ def main():
                              mode='train',
                              start_index = 1,
                              num_workers=4,
+                             shuffle=True
                             )
 
     val_loader = get_movie_time_loader(os.path.join(data_root, 'val/'),
@@ -136,6 +137,7 @@ def main():
                             mode='val',
                             start_index = 10000,
                             num_workers=4,
+                            shuffle=True
                             )
 
     global val_bs
@@ -232,7 +234,7 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
     errorD_real = AverageMeter()
     errorD_fake = AverageMeter()
     errorG_GAN = AverageMeter()
-    errorG_L1_lab = AverageMeter()
+    #errorG_L1_lab = AverageMeter()
     errorG_R = AverageMeter()
 
     model_G.train()
@@ -241,9 +243,11 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
     real_label = 1
     fake_label = 0
 
-    for i, (_now, _prev, _next, target, target_lab) in enumerate(train_loader):
+    #for i, (_now, _prev, _next, target, target_lab) in enumerate(train_loader):
+    for i, (_now, _prev, _next, target) in enumerate(train_loader):
 
-        _now, _prev, _next, target, target_lab = Variable(_now.cuda()), Variable(_prev.cuda()), Variable(_next.cuda()), Variable(target.cuda()), Variable(target_lab.cuda())
+        #_now, _prev, _next, target, target_lab = Variable(_now.cuda()), Variable(_prev.cuda()), Variable(_next.cuda()), Variable(target.cuda()), Variable(target_lab.cuda())
+        _now, _prev, _next, target = Variable(_now.cuda()), Variable(_prev.cuda()), Variable(_next.cuda()), Variable(target.cuda())
 
         ########################
         # update D network
@@ -260,7 +264,8 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
             D_x = output.data.mean()
 
             # train with fake
-            fake, _ =  model_G(_now, _prev, _next)
+            #fake, _ =  model_G(_now, _prev, _next)
+            fake =  model_G(_now, _prev, _next)
             #labelv = Variable(label.fill_(fake_label))
             output = model_D(fake.detach())
             #errD_fake = criterion(torch.squeeze(output), labelv)
@@ -277,15 +282,17 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
 
         if (i % args.numD) == 0:
             #labelv = Variable(label.fill_(real_label))
-            fake, fake_lab = model_G(_now, _prev, _next)
+            #fake, fake_lab = model_G(_now, _prev, _next)
+            fake = model_G(_now, _prev, _next)
             model_G.zero_grad()
             output = model_D(fake)
             #errG_GAN = criterion(torch.squeeze(output), labelv)
             errG_GAN = criterionGAN(output, True)
             errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
-            errG_L1_lab = L1(fake_lab.view(fake_lab.size(0),-1), target_lab.view(target_lab.size(0),-1))
+            #errG_L1_lab = L1(fake_lab.view(fake_lab.size(0),-1), target_lab.view(target_lab.size(0),-1))
 
-            errG = errG_GAN + args.lamb * (0.7 * errG_L1 + 0.3 * errG_L1_lab)
+            #errG = errG_GAN + args.lamb * (0.7 * errG_L1 + 0.3 * errG_L1_lab)
+            errG = errG_GAN + args.lamb * errG_L1
             errG.backward()
             D_G_x2 = output.data.mean()
             optimizer_G.step()
@@ -298,7 +305,7 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
             errorD_basic.update(errD, target.size(0), history=1)
             errorD_real.update(errD_real, target.size(0), history=1)
             errorD_fake.update(errD_fake, target.size(0), history=1)
-            errorG_L1_lab.update(errG_L1_lab, target.size(0), history=1)
+            #errorG_L1_lab.update(errG_L1_lab, target.size(0), history=1)
 
             errorD_real.update(errD_real, target.size(0), history=1)
             errorD_fake.update(errD_fake, target.size(0), history=1)
@@ -309,10 +316,10 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
             vis_result(_now.data, target.data, fake.data, epoch, mode = 'train')
 
         if iteration % print_interval == 0:
-            print('Epoch%d[%d/%d]: Loss_D: %.4f(R%0.4f+F%0.4f) Loss_G: %0.4f(GAN%.4f+RGB%0.4f+Lab%0.4f) Raw RGB: %.4f D(x): %.3f D(G(z)): %.3f / %.3f' \
+            print('Epoch%d[%d/%d]: Loss_D: %.4f(R%0.4f+F%0.4f) Loss_G: %0.4f(GAN%.4f+RGB%0.4f) D(x): %.3f D(G(z)): %.3f / %.3f' \
                 % (epoch, i, len(train_loader),
                 errorD_basic.avg, errorD_real.avg, errorD_fake.avg,
-                errorG_basic.avg, errorG_GAN.avg, errorG_R.avg * 0.8 * args.lamb, errorG_L1_lab.avg * 0.2 * args.lamb, errorG_R.avg,
+                errorG_basic.avg, errorG_GAN.avg, errorG_R.avg * args.lamb,
                 D_x, D_G_x1, D_G_x2
                 ))
             # plot image
@@ -326,7 +333,7 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
             errorD_fake.reset()
             errorG_GAN.reset()
             errorG_R.reset()
-            errorG_L1_lab.reset()
+            #errorG_L1_lab.reset()
 
         iteration += 1
 
@@ -344,8 +351,10 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
     fake_label = 0
 
     with torch.no_grad(): # Fuck torch.no_grad!! Gradient will accumalte if you don't set torch.no_grad()!!
-        for i, (_now, _prev, _next, target, target_lab) in enumerate(val_loader):
-            _now, _prev, _next, target, target_lab = Variable(_now.cuda()), Variable(_prev.cuda()), Variable(_next.cuda()), Variable(target.cuda()), Variable(target_lab.cuda())
+        #for i, (_now, _prev, _next, target, target_lab) in enumerate(val_loader):
+        for i, (_now, _prev, _next, target) in enumerate(val_loader):
+            #_now, _prev, _next, target, target_lab = Variable(_now.cuda()), Variable(_prev.cuda()), Variable(_next.cuda()), Variable(target.cuda()), Variable(target_lab.cuda())
+            _now, _prev, _next, target = Variable(_now.cuda()), Variable(_prev.cuda()), Variable(_next.cuda()), Variable(target.cuda())
             ########################
             # D network
             ########################
@@ -357,7 +366,8 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
             errD_real = criterionGAN(output, True)
 
             # validate with fake
-            fake, fake_lab =  model_G(_now, _prev, _next)
+            #fake, fake_lab =  model_G(_now, _prev, _next)
+            fake =  model_G(_now, _prev, _next)
             #labelv = Variable(label.fill_(fake_label))
             output = model_D(fake.detach())
             errD_fake = criterionGAN(output, False)
@@ -371,9 +381,10 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
             output = model_D(fake)
             errG_GAN = criterionGAN(output, True)
             errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
-            errG_L1_lab = L1(fake_lab.view(fake_lab.size(0),-1), target_lab.view(target_lab.size(0),-1))
+            #errG_L1_lab = L1(fake_lab.view(fake_lab.size(0),-1), target_lab.view(target_lab.size(0),-1))
 
-            errG = errG_GAN + args.lamb * (0.8 * errG_L1 + 0.2 * errG_L1_lab)
+            #errG = errG_GAN + args.lamb * (0.8 * errG_L1 + 0.2 * errG_L1_lab)
+            errG = errG_GAN + args.lamb * errG_L1 
 
             errorG.update(errG, target.size(0), history=1)
             errorD.update(errD, target.size(0), history=1)

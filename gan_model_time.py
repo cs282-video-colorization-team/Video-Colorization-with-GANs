@@ -236,14 +236,14 @@ class ConvGenTime(nn.Module):
         rgb = self.deconvRGB(h)
         rgb = F.tanh(rgb) # 3,224,224
 
-        lab = self.deconvLAB(h)
-        lab = F.tanh(lab) # 3,224,224
+        # lab = self.deconvLAB(h)
+        # lab = F.tanh(lab) # 3,224,224
 
         # =========================
         # Step 4  -END- UNET decoder
         # =========================
 
-        return rgb, lab
+        return rgb#, lab
 
     def _initialize_weights(self):
         for m in self.modules():
