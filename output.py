@@ -7,7 +7,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
 import matplotlib
-
+from torchvision import transforms
+import torchvision
  
 if __name__ == '__main__':
 	Large = False
@@ -38,25 +39,37 @@ if __name__ == '__main__':
 			print("fake shape: ", fake.shape)
 			for i in range(val_bs):
 				# validate with fake
-				pred = fake[i].cpu().numpy()
-				# print (type(pred))
+                                # validate with fake
+                                # validate with fake
+                                # validate with fake
+                                # validate with fake
+                                # validate with fake
+                                transform = transforms.Compose([transforms.ToPILImage(), transforms.Resize(size=(480,360)), transforms.ToTensor()]);tmp_img = transform(fake[i])
+                                # p = transforms.ToPILImage()(fake[i].cpu())
+                                # p = p.resize((480,360))
+                                # p.save('output/'+ '%05d.png' %(cnt))
+                                # cnt += 1
 
-				pred_rgb = (np.transpose(pred, (1,2,0)).astype(np.float64) + 1) / 2.
+				#pred = fake[i].cpu().numpy()
+				# tmp_img = transform(fake[i])
+                                torchvision.utils.save_image(tmp_img, 'output/'+ '%05d.png' %(cnt))
+                                cnt += 1
+                                # validate with fake
+
+				#pred_rgb = (np.transpose(pred, (1,2,0)).astype(np.float64) + 1) / 2.
 
 
 				# print(type(pred_rgb))
 				# print("pred shape: ", pred_rgb.shape)
 				# im = Image.fromarray(pred_rgb, 'RGB')
 
-				im = Image.fromarray(np.uint8(pred_rgb), 'RGB')
+				#im = Image.fromarray(np.uint8(pred_rgb), 'RGB')
 
-				im = im.resize((480,360))
+				#im = im.resize((480,360))
 
-				im.save('output/'+ '%05d.png' %(cnt))
+				#im.save('output/'+ '%05d.png' %(cnt))
 
 				# matplotlib.image.imsave('output/'+ '%05d.png' %(cnt), pred_rgb)
-
-
 				# new_im = Image.fromarray(pred_rgb)
 				# new_im.save("numpy_altered_sample2.png" % )
 				# pred_rgb = pred_rgb.resize((480,360))
@@ -70,5 +83,4 @@ if __name__ == '__main__':
 				# im = Image.fromarray(pred_rgb)
 				# im.save("your_file.jpeg")
 				# im.save('output/'+ '%05d.png' %(cnt))
-				cnt+=1
-
+				#cnt+=1
