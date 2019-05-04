@@ -40,6 +40,10 @@ if __name__ == '__main__':
 
 				pred_rgb = (np.transpose(pred, (1,2,0)).astype(np.float64) + 1) / 2.
 
+				print(type(pred_rgb))
+				print("pred shape: ", pred_rgb.shape)
+
+
 				# new_im = Image.fromarray(pred_rgb)
 				# new_im.save("numpy_altered_sample2.png" % )
 				# pred_rgb = pred_rgb.resize((480,360))
