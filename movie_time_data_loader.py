@@ -60,10 +60,10 @@ class MovieTime(Dataset):
     def __len__(self):
         return len(self.data_files_name)
 
-def get_movie_time_loader(image_path, batch_size=16, mode='train', start_index = 1, num_workers=1, shuffle=True, is_color = True):
+def get_movie_time_loader(image_path, batch_size=16, mode='train', start_index = 1, num_workers=1, shuffle=True):
 
     transform_gray = []
-    if not (mode == 'test' and is_color == False):
+    if not (mode == 'test'):
         transform_gray.append(transforms.Grayscale())
     transform_gray.append(transforms.ToTensor())
     transform_gray.append(transforms.Normalize(mean=[0.5], std=[0.5]))
