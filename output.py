@@ -1,11 +1,12 @@
 import torch
 import os
 from gan_model import *
-
+from movie_data_loader import *
+from torch.autograd import Variable
  
 if __name__ == '__main__':
 	ngf = 64
-	PATH = 'G_epoch13.pth.tar'
+	PATH = 'G_epoch0.pth.tar'
 
 	save_path = 'output'
 	ori_path = 'demoOriginal'
@@ -16,8 +17,8 @@ if __name__ == '__main__':
 	model_G.eval()
 
 	val_loader = get_loader(os.path.join(ori_path, 'data/'),
-		batch_size=args.batch_size,
-		large=args.large,
+		batch_size=16,
+		large=True,
 		mode='val',
 		num_workers=4,
 		)
