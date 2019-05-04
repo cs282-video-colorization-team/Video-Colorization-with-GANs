@@ -1,6 +1,7 @@
 import torch
 import os
 from gan_model import *
+from gan_model_time import *
 from movie_data_loader import *
 from movie_time_data_loader import *
 from torch.autograd import Variable
@@ -38,7 +39,10 @@ def main():
     checkpoint_G = torch.load(PATH)
     ngf = checkpoint_G['ngf']
     Large = checkpoint_G['Large']
-    model_G = ConvGen(ngf)
+    if args.time=='baseline':
+        model_G = ConvGen(ngf)
+    else:
+        model_G = ConvGenTime(ngf)
     model_G.load_state_dict(checkpoint_G['state_dict'])
 
     model_G.eval()
