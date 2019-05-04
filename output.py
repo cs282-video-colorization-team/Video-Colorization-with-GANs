@@ -23,6 +23,9 @@ parser.add_argument('--modelpath', type=str,
     help='Model Root path')
 parser.add_argument('--time', type=str,
     help='baseline or with time', choices=['baseline', 'time'])
+parser.add_argument('--start_index', default=1, type=int,
+                    help='start_index of the filename')
+
 # parser.add_argument('--mode', default='val', type=str,
 #     help='Mode of dataloader, if only gray image, choose test, else val', choices=['val','test'])
 
@@ -63,7 +66,8 @@ def main():
             mode='test',
             start_index = 1,
             num_workers=4,
-            is_color=False
+            is_color=False,
+            start_index=args.start_index
             )
         
     with torch.no_grad(): # Fuck torch.no_grad!! Gradient will accumalte if you don't set torch.no_grad()!!
