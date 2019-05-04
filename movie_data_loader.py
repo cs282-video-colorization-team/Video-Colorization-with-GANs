@@ -36,7 +36,7 @@ class Movie(Dataset):
         elif self.mode == 'val':
             return self.transform_gray(image), self.transform_color(image)
         elif self.mode == 'test':
-            return self.transform_gray(image)
+            return self.transform_gray(image), self.data_files_name[index] # add file name for getting continous frames 
 
     def __len__(self):
         return len(self.data_files_name)

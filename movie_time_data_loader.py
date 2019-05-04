@@ -55,7 +55,7 @@ class MovieTime(Dataset):
         elif self.mode == 'val':
             return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next), self.transform_color(image_now)#, self.transform_color(image_now_lab)
         elif self.mode == 'test':
-            return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next)
+            return self.transform_gray(image_now), self.transform_gray(image_prev), self.transform_gray(image_next), now_file_name 
 
     def __len__(self):
         return len(self.data_files_name)
