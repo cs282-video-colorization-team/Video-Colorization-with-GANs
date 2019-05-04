@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import torchvision
 import argparse
-
+import matplotlib
 
 parser = argparse.ArgumentParser(description='Test Colorization using GAN')
 parser.add_argument('--path', type=str,
@@ -86,9 +86,14 @@ def main():
                     # torchvision.utils.save_image(tmp_img, 'output/'+ '%05d.png' %(cnt))
 
                     # #method 2
-                    p = transforms.ToPILImage()(fake[j].cpu())
-                    p = p.resize((480,360))
-                    p.save(save_path + filename[j])
+                    # p = transforms.ToPILImage()(fake[j].cpu())
+                    # p = p.resize((480,360))
+                    # p.save(save_path + filename[j])
+
+                    # #method 3
+                    pred = fake[j].cpu().numpy()
+                    pred_rgb = (np.transpose(pred, (1,2,0)).astype(np.float64) + 1) / 2.
+                    matplotlib.image.imsave(save_path + filename[j], pred_rgb)
         else:
             for i, (_now, _prev, _next, filename) in enumerate(val_loader):
                 _now, _prev, _next = Variable(_now), Variable(_prev), Variable(_next)
@@ -98,9 +103,12 @@ def main():
 
                 for j in range(val_bs):
 
-                    p = transforms.ToPILImage()(fake[j].cpu())
-                    p = p.resize((480,360))
-                    p.save(save_path + filename[j])
+                    # p = transforms.ToPILImage()(fake[j].cpu())
+                    # p = p.resize((480,360))
+                    # p.save(save_path + filename[j])
+                    pred = fake[j].cpu().numpy()
+                    pred_rgb = (np.transpose(pred, (1,2,0)).astype(np.float64) + 1) / 2.
+                    matplotlib.image.imsave(save_path + filename[j], pred_rgb)
 
 
 
