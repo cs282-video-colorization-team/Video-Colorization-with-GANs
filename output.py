@@ -63,21 +63,21 @@ def main():
     with torch.no_grad(): # Fuck torch.no_grad!! Gradient will accumalte if you don't set torch.no_grad()!!
         if args.time=='baseline':
             for i, (data, filename) in enumerate(val_loader):
-                print("filename:", filename)
-                print("filename type:", type(filename))
+                # print("filename:", filename)
+                # print("filename type:", type(filename))
                 data = Variable(data)
                 # print(data.shape)
                 fake =  model_G(data).data
                 # print("fake shape: ", fake.shape)
-                for i in range(val_bs):
+                for j in range(val_bs):
                     # #method 1
                     # transform = transforms.Compose([transforms.ToPILImage(), transforms.Resize(size=(360,480)), transforms.ToTensor()]);tmp_img = transform(fake[i])
                     # torchvision.utils.save_image(tmp_img, 'output/'+ '%05d.png' %(cnt))
 
                     # #method 2
-                    p = transforms.ToPILImage()(fake[i].cpu())
+                    p = transforms.ToPILImage()(fake[j].cpu())
                     p = p.resize((480,360))
-                    p.save(save_path + filename[0])
+                    p.save(save_path + filename[j])
         else:
             for i, (_now, _prev, _next, filename) in enumerate(val_loader):
                 _now, _prev, _next = Variable(_now), Variable(_prev), Variable(_next)
@@ -85,11 +85,11 @@ def main():
                 # validate with fake
                 fake, fake_lab =  model_G(_now, _prev, _next).data
 
-                for i in range(val_bs):
+                for j in range(val_bs):
 
-                    p = transforms.ToPILImage()(fake[i].cpu())
+                    p = transforms.ToPILImage()(fake[j].cpu())
                     p = p.resize((480,360))
-                    p.save(save_path + filename)
+                    p.save(save_path + filename[j])
 
 
 
