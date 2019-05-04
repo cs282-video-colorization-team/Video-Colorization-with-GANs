@@ -150,10 +150,10 @@ def main():
     global img_path
     size = ''
     if args.large: size = 'Large'
-    img_path = 'img/model_time/%s/GAN_%s_L1%d_bs%d_%s_lr%s_ngf%d_ndf%d_numG%d/' \
-               % (date, size, args.lamb, args.batch_size, 'Adam', str(args.lr), args.ngf, args.ndf, args.numG)
-    model_path = 'model/model_time/%s/GAN_%s_L1%d_bs%d_%s_lr%s_ngf%d_ndf%d_numG%d/' \
-               % (date, size, args.lamb, args.batch_size, 'Adam', str(args.lr), args.ngf, args.ndf, args.numG)
+    img_path = 'img/model_time/%s/GAN_%s_L1%d_bs%d_%s_lr%s_ngf%d_ndf%d_numG%d_numD%d/' \
+               % (date, size, args.lamb, args.batch_size, 'Adam', str(args.lr), args.ngf, args.ndf, args.numG, args.numD)
+    model_path = 'model/model_time/%s/GAN_%s_L1%d_bs%d_%s_lr%s_ngf%d_ndf%d_numG%d_numD%d/' \
+               % (date, size, args.lamb, args.batch_size, 'Adam', str(args.lr), args.ngf, args.ndf, args.numG, args.numD)
     if not os.path.exists(img_path):
         os.makedirs(img_path)
     if not os.path.exists(model_path):
@@ -185,6 +185,7 @@ def main():
                              'batch_size': args.batch_size,
                              'ndf': args.ndf,
                              'numG': args.numG,
+                             'numD': args.numD,
                              },
                              filename=model_path+'G_epoch%d.pth.tar' \
                              % epoch)
@@ -199,6 +200,7 @@ def main():
                      'batch_size': args.batch_size,
                      'ndf': args.ndf,
                      'numG': args.numG,
+                     'numD': args.numD,
                      },
                      filename=model_path+'Last_G_epoch%d.pth.tar' \
                      % epoch)
@@ -212,6 +214,7 @@ def main():
                      'batch_size': args.batch_size,
                      'ndf': args.ndf,
                      'numG': args.numG,
+                     'numD': args.numD,
                      },
                      filename=model_path+'Last_D_epoch%d.pth.tar' \
                      % epoch)
@@ -367,7 +370,7 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
             errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
             errG_L1_lab = L1(fake_lab.view(fake_lab.size(0),-1), target_lab.view(target_lab.size(0),-1))
 
-            errG = errG_GAN + args.lamb * (errG_L1 + errG_L1_lab)
+            errG = errG_GAN + args.lamb * (0.7 * errG_L1 + 0.3 * errG_L1_lab)
 
             errorG.update(errG, target.size(0), history=1)
             errorD.update(errD, target.size(0), history=1)
