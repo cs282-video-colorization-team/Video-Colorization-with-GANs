@@ -2,85 +2,96 @@ import torch
 import os
 from gan_model import *
 from movie_data_loader import *
+from movie_time_data_loader import *
 from torch.autograd import Variable
+from PIL import Image
+from torchvision import transforms
 import numpy as np
 import matplotlib.pyplot as plt
-from PIL import Image
 import matplotlib
-from torchvision import transforms
 import torchvision
+import argparse
+
+
+parser = argparse.ArgumentParser(description='Test Colorization using GAN')
+parser.add_argument('--path', type=str,
+	help='Root path for dataset')
+parser.add_argument('--savepath', type=str,
+	help='Save Root path for dataset')
+parser.add_argument('--modelpath', type=str,
+	help='Model Root path')
+parser.add_argument('--time', type=str,
+	help='baseline or with time', choices=['baseline', 'time'])
+parser.add_argument('--mode', default='val', type=str,
+	help='Mode of dataloader, if only gray image, choose test, else val', choices=['val','test'])
+
  
-if __name__ == '__main__':
-	Large = False
-	ngf = 64
-	PATH = 'G_epoch13.pth.tar'
+def main():
+	global args
+    args = parser.parse_args()
 
-	save_path = 'output'
-	ori_path = 'demoOriginal'
+	PATH = args.modelpath
 
-	model_G = ConvGen(ngf)
+	save_path = args.savepath
+	ori_path = arg.path
+
 	checkpoint_G = torch.load(PATH)
+	ngf = checkpoint_G['ngf']
+	Large = checkpoint_G['Large']
+	model_G = ConvGen(ngf)
 	model_G.load_state_dict(checkpoint_G['state_dict'])
+
 	model_G.eval()
 
-	val_loader = get_loader(os.path.join(ori_path, 'data/'),
-		batch_size=16,
-		large=Large,
-		mode='val',
-		num_workers=4,
-		)
+	if args.time=='baseline':
+		val_loader = get_loader(ori_path,
+			batch_size=checkpoint_G['batch_size'],
+			large=Large,
+			mode=args.mode,
+			num_workers=4,
+			)
+	else:
+		val_loader = get_movie_time_loader(ori_path,
+			batch_size=checkpoint_G['batch_size'],
+			mode=args.mode,
+			start_index = 1,
+			num_workers=4,
+			)
 	val_bs = val_loader.batch_size
 	cnt = 1
 	with torch.no_grad(): # Fuck torch.no_grad!! Gradient will accumalte if you don't set torch.no_grad()!!
-		for i, (data, target) in enumerate(val_loader):
-			data, target = Variable(data), Variable(target)
-			print(data.shape)
-			fake =  model_G(data).data
-			print("fake shape: ", fake.shape)
-			for i in range(val_bs):
+		if args.time=='baseline':
+			for i, (data, target) in enumerate(val_loader):
+				data, target = Variable(data), Variable(target)
+				# print(data.shape)
+				fake =  model_G(data).data
+				# print("fake shape: ", fake.shape)
+				for i in range(val_bs):
+					# #method 1
+					# transform = transforms.Compose([transforms.ToPILImage(), transforms.Resize(size=(360,480)), transforms.ToTensor()]);tmp_img = transform(fake[i])
+					# torchvision.utils.save_image(tmp_img, 'output/'+ '%05d.png' %(cnt))
+					# cnt += 1
+
+					# #method 2
+					p = transforms.ToPILImage()(fake[i].cpu())
+					p = p.resize((480,360))
+					p.save('output/'+ '%05d.png' %(cnt))
+					cnt += 1
+		else:
+			for i, (_now, _prev, _next, target, target_lab) in enumerate(val_loader):
+				_now, _prev, _next, target, target_lab = Variable(_now), Variable(_prev), Variable(_next), Variable(target), Variable(target_lab)
+
 				# validate with fake
-                                # validate with fake
-                                # validate with fake
-                                # validate with fake
-                                # validate with fake
-                                # validate with fake
-                                transform = transforms.Compose([transforms.ToPILImage(), transforms.Resize(size=(480,360)), transforms.ToTensor()]);tmp_img = transform(fake[i])
-                                # p = transforms.ToPILImage()(fake[i].cpu())
-                                # p = p.resize((480,360))
-                                # p.save('output/'+ '%05d.png' %(cnt))
-                                # cnt += 1
+				fake, fake_lab =  model_G(_now, _prev, _next).data
 
-				#pred = fake[i].cpu().numpy()
-				# tmp_img = transform(fake[i])
-                                torchvision.utils.save_image(tmp_img, 'output/'+ '%05d.png' %(cnt))
-                                cnt += 1
-                                # validate with fake
+				for i in range(val_bs):
 
-				#pred_rgb = (np.transpose(pred, (1,2,0)).astype(np.float64) + 1) / 2.
+					p = transforms.ToPILImage()(fake[i].cpu())
+					p = p.resize((480,360))
+					p.save('output/'+ '%05d.png' %(cnt))
+					cnt += 1
 
 
-				# print(type(pred_rgb))
-				# print("pred shape: ", pred_rgb.shape)
-				# im = Image.fromarray(pred_rgb, 'RGB')
 
-				#im = Image.fromarray(np.uint8(pred_rgb), 'RGB')
-
-				#im = im.resize((480,360))
-
-				#im.save('output/'+ '%05d.png' %(cnt))
-
-				# matplotlib.image.imsave('output/'+ '%05d.png' %(cnt), pred_rgb)
-				# new_im = Image.fromarray(pred_rgb)
-				# new_im.save("numpy_altered_sample2.png" % )
-				# pred_rgb = pred_rgb.resize((480,360))
-				# plt.figure(figsize=(480,360))
-				# plt.imshow(pred_rgb)
-				# plt.axis('off')
-				# plt.tight_layout()
-				# plt.savefig(save_path+ '%05d.png' %(cnt))
-				# print(os.path.join(save_path, '%05d.png'))
-				# pred_rgb.save("output/", '%05d.png' %(cnt))
-				# im = Image.fromarray(pred_rgb)
-				# im.save("your_file.jpeg")
-				# im.save('output/'+ '%05d.png' %(cnt))
-				#cnt+=1
+if __name__ == '__main__':
+    main()
