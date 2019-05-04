@@ -33,7 +33,7 @@ def main():
     PATH = args.modelpath
 
     save_path = args.savepath
-    ori_path = arg.path
+    ori_path = args.path
 
     checkpoint_G = torch.load(PATH)
     ngf = checkpoint_G['ngf']
@@ -45,19 +45,19 @@ def main():
 
     if args.time=='baseline':
         val_loader = get_loader(ori_path,
-            batch_size=checkpoint_G['batch_size'],
+            batch_size=1,
             large=Large,
             mode=args.mode,
             num_workers=4,
             )
     else:
         val_loader = get_movie_time_loader(ori_path,
-            batch_size=checkpoint_G['batch_size'],
+            batch_size=1,
             mode=args.mode,
             start_index = 1,
             num_workers=4,
             )
-    val_bs = val_loader.batch_size
+    val_bs = 1 #val_loader.batch_size
     cnt = 1
     with torch.no_grad(): # Fuck torch.no_grad!! Gradient will accumalte if you don't set torch.no_grad()!!
         if args.time=='baseline':
