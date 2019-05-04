@@ -22,6 +22,7 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
+import datetime
 
 
 parser = argparse.ArgumentParser(description='Colorization using GAN')
@@ -388,9 +389,9 @@ def vis_result(data, target, output, epoch, mode='val'):
     img_list = np.concatenate(img_list, axis=0)
 
     if mode=='val':
-        matplotlib.image.imsave(img_path + 'epoch%d_val.png' % epoch)
+        matplotlib.image.imsave(img_path + 'epoch%d_val.png' % epoch, img_list)
     else:
-        matplotlib.image.imsave(img_path + 'epoch%d_train.png' % epoch)
+        matplotlib.image.imsave(img_path + 'epoch%d_train.png' % epoch, img_list)
 
 if __name__ == '__main__':
     main()
