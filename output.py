@@ -46,7 +46,9 @@ if __name__ == '__main__':
 
 				# print(type(pred_rgb))
 				# print("pred shape: ", pred_rgb.shape)
-				im = Image.fromarray(pred_rgb, 'RGB')
+				# im = Image.fromarray(pred_rgb, 'RGB')
+
+				im = Image.fromarray(np.uint8(im), 'RGB')
 
 				im = im.resize((480,360))
 
