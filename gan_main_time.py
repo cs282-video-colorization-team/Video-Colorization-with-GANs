@@ -26,6 +26,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import datetime
 
+import matplotlib
+
 
 parser = argparse.ArgumentParser(description='Colorization using GAN')
 parser.add_argument('--path', type=str,
