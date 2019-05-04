@@ -55,7 +55,8 @@ parser.add_argument('--ngf', default=32, type=int,
 parser.add_argument('--ndf', default=32, type=int,
                     help='# of discrim filters in first conv layer')
 
-parser.add_argument('--numG', default=5, type=int, help='G trains numG times when D trains per time')
+parser.add_argument('--numG', default=1, type=int, help='G trains numG times when D trains per time')
+parser.add_argument('--numD' default=1, type=int, help='D trains numD times when G trains per time')
 parser.add_argument('--patchGAN', action='store_true', help='Use patchGAN in Discriminator')
 parser.add_argument('--use_lsgan', action='store_true', help='Use LSGAN in loss criterion')
 
@@ -272,19 +273,20 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
         # update G network
         ########################
 
-        #labelv = Variable(label.fill_(real_label))
-        fake, fake_lab = model_G(_now, _prev, _next)
-        model_G.zero_grad()
-        output = model_D(fake)
-        #errG_GAN = criterion(torch.squeeze(output), labelv)
-        errG_GAN = criterionGAN(output, True)
-        errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
-        errG_L1_lab = L1(fake_lab.view(fake_lab.size(0),-1), target_lab.view(target_lab.size(0),-1))
+        if (i % args.numD) == 0:
+            #labelv = Variable(label.fill_(real_label))
+            fake, fake_lab = model_G(_now, _prev, _next)
+            model_G.zero_grad()
+            output = model_D(fake)
+            #errG_GAN = criterion(torch.squeeze(output), labelv)
+            errG_GAN = criterionGAN(output, True)
+            errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
+            errG_L1_lab = L1(fake_lab.view(fake_lab.size(0),-1), target_lab.view(target_lab.size(0),-1))
 
-        errG = errG_GAN + args.lamb * (0.7 * errG_L1 + 0.3 * errG_L1_lab)
-        errG.backward()
-        D_G_x2 = output.data.mean()
-        optimizer_G.step()
+            errG = errG_GAN + args.lamb * (0.7 * errG_L1 + 0.3 * errG_L1_lab)
+            errG.backward()
+            D_G_x2 = output.data.mean()
+            optimizer_G.step()
 
         # store error values
         if (i % args.numG) == 0:
@@ -300,9 +302,6 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
             errorD_fake.update(errD_fake, target.size(0), history=1)
             errorG_GAN.update(errG_GAN, target.size(0), history=1)
             errorG_R.update(errG_L1, target.size(0), history=1)
-
-        if i == 0:
-            vis_result(_now.data, target.data, fake.data, epoch, mode = 'train')
 
 
         if iteration % print_interval == 0:
