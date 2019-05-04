@@ -25,6 +25,8 @@ parser.add_argument('--time', type=str,
     help='baseline or with time', choices=['baseline', 'time'])
 parser.add_argument('--start_index', default=1, type=int,
                     help='start_index of the filename')
+parser.add_argument('--is_color', action="store_true",
+                    help='say it if it is a image with color')
 
 # parser.add_argument('--mode', default='val', type=str,
 #     help='Mode of dataloader, if only gray image, choose test, else val', choices=['val','test'])
@@ -58,7 +60,7 @@ def main():
             large=Large,
             mode='test',
             num_workers=4,
-            is_color=True
+            is_color=args.is_color
             )
     else:
         val_loader = get_movie_time_loader(ori_path,
@@ -67,7 +69,8 @@ def main():
             start_index = 1,
             num_workers=4,
             is_color=False,
-            start_index=args.start_index
+            start_index=args.start_index,
+            is_color=args.is_color
             )
         
     with torch.no_grad(): # Fuck torch.no_grad!! Gradient will accumalte if you don't set torch.no_grad()!!
