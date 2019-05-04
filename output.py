@@ -42,8 +42,10 @@ if __name__ == '__main__':
 
 				pred_rgb = (np.transpose(pred, (1,2,0)).astype(np.float64) + 1) / 2.
 
-				print(type(pred_rgb))
-				print("pred shape: ", pred_rgb.shape)
+				pred_rgb = pred_rgb.resize((480,360))
+
+				# print(type(pred_rgb))
+				# print("pred shape: ", pred_rgb.shape)
 
 				matplotlib.image.imsave('output/'+ '%05d.png' %(cnt), pred_rgb)
 
@@ -58,8 +60,6 @@ if __name__ == '__main__':
 				# plt.savefig(save_path+ '%05d.png' %(cnt))
 				# print(os.path.join(save_path, '%05d.png'))
 				# pred_rgb.save("output/", '%05d.png' %(cnt))
-
-
 				# im = Image.fromarray(pred_rgb)
 				# im.save("your_file.jpeg")
 				# im.save('output/'+ '%05d.png' %(cnt))
