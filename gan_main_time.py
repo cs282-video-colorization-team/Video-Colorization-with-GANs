@@ -1,7 +1,9 @@
 # from transform import ReLabel, ToLabel, ToSP, Scale
 from gan_model_time import ConvGenTime
 from gan_model import ConvDis
+from gan_model_time import PatchDis
 from utils import *
+import gan_model_time
 
 import torch
 import torch.nn as nn
@@ -55,6 +57,7 @@ parser.add_argument('--numG', default=5, type=int, help='G trains numG times whe
 parser.add_argument('--patchGAN', action='store_true', help='Use patchGAN in Discriminator')
 parser.add_argument('--use_lsgan', action='store_true', help='Use LSGAN in loss criterion')
 
+
 # parser.add_argument('-p', '--plot', action="store_true",
 #                     help='Plot accuracy and loss diagram?')
 parser.add_argument('-s','--save', action="store_true",
@@ -66,7 +69,7 @@ parser.add_argument('--gpu', default=0, type=int,
 def main():
     global args, date
     args = parser.parse_args()
-    date = str(datetime.datetime.now())
+    date = str(datetime.datetime.now()).replace(':', '_').replace(' ', '_').replace('.', '_')
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
@@ -144,11 +147,11 @@ def main():
 
     global img_path
     size = ''
-    if args.large: size = '_Large'
-    img_path = 'img/%s/GAN_%s_%dL1_bs%d_%s_lr%s/' \
-               % (date, size, args.lamb, args.batch_size, 'Adam', str(args.lr))
-    model_path = 'model/%s/GAN_%s_%dL1_bs%d_%s_lr%s/' \
-               % (date, size, args.lamb, args.batch_size, 'Adam', str(args.lr))
+    if args.large: size = 'Large'
+    img_path = 'img/%s/GAN_%s_L1%d_bs%d_%s_lr%s_ngf%d_ndf%d_numG%d/' \
+               % (date, size, args.lamb, args.batch_size, 'Adam', str(args.lr), args.ngf, args.ndf, args.numG)
+    model_path = 'model/%s/GAN_%s_L1%d_bs%d_%s_lr%s_ngf%d_ndf%d_numG%d/' \
+               % (date, size, args.lamb, args.batch_size, 'Adam', str(args.lr), args.ngf, args.ndf, args.numG)
     if not os.path.exists(img_path):
         os.makedirs(img_path)
     if not os.path.exists(model_path):
@@ -311,27 +314,29 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
             ########################
             # validate with real
             output = model_D(target)
-            label = torch.FloatTensor(target.size(0)).fill_(real_label).cuda()
-            labelv = Variable(label)
-            errD_real = criterion(torch.squeeze(output), labelv)
+            #label = torch.FloatTensor(target.size(0)).fill_(real_label).cuda()
+            #labelv = Variable(label)
+            
+            errD_real = criterionGAN(output, True)
 
             # validate with fake
-            fake =  model_G(_now, _prev, _next)
-            labelv = Variable(label.fill_(fake_label))
+            fake, fake_lab =  model_G(_now, _prev, _next)
+            #labelv = Variable(label.fill_(fake_label))
             output = model_D(fake.detach())
-            errD_fake = criterion(torch.squeeze(output), labelv)
+            errD_fake = criterionGAN(output, False)
 
             errD = errD_real + errD_fake
 
             ########################
             # G network
             ########################
-            labelv = Variable(label.fill_(real_label))
+            #labelv = Variable(label.fill_(real_label))
             output = model_D(fake)
-            errG_GAN = criterion(torch.squeeze(output), labelv)
+            errG_GAN = criterionGAN(output, True)
             errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
+            errG_L1_lab = L1(fake_lab.view(fake_lab.size(0),-1), target_lab.view(target_lab.size(0),-1))
 
-            errG = errG_GAN + args.lamb * errG_L1
+            errG = errG_GAN + args.lamb * (errG_L1 + errG_L1_lab)
 
             errorG.update(errG, target.size(0), history=1)
             errorD.update(errD, target.size(0), history=1)

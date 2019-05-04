@@ -42,6 +42,7 @@ class GANLoss(nn.Module):
         target_tensor = self.get_target_tensor(input, target_is_real)
         return self.loss(input, target_tensor)
 
+
 class ConvGenTime(nn.Module):
     '''Generator'''
     def __init__(self, ngf=32):
