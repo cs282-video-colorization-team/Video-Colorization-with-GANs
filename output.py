@@ -6,6 +6,8 @@ from torch.autograd import Variable
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
+import matplotlib
+
  
 if __name__ == '__main__':
 	ngf = 64
@@ -43,6 +45,8 @@ if __name__ == '__main__':
 				print(type(pred_rgb))
 				print("pred shape: ", pred_rgb.shape)
 
+				matplotlib.image.imsave('output/'+ '%05d.png' %(cnt), pred_rgb)
+
 
 				# new_im = Image.fromarray(pred_rgb)
 				# new_im.save("numpy_altered_sample2.png" % )
@@ -55,8 +59,9 @@ if __name__ == '__main__':
 				# print(os.path.join(save_path, '%05d.png'))
 				# pred_rgb.save("output/", '%05d.png' %(cnt))
 
-				im = Image.fromarray(pred_rgb)
-				im.save("your_file.jpeg")
-				im.save('output/'+ '%05d.png' %(cnt))
+
+				# im = Image.fromarray(pred_rgb)
+				# im.save("your_file.jpeg")
+				# im.save('output/'+ '%05d.png' %(cnt))
 				cnt+=1
 
