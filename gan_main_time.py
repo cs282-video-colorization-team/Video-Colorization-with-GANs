@@ -308,7 +308,7 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
             print('Epoch%d[%d/%d]: Loss_D: %.4f(R%0.4f+F%0.4f) Loss_G: %0.4f(GAN%.4f+RGB%0.4f+Lab%0.4f) Raw RGB: %.4f D(x): %.3f D(G(z)): %.3f / %.3f' \
                 % (epoch, i, len(train_loader),
                 errorD_basic.avg, errorD_real.avg, errorD_fake.avg,
-                errorG_basic.avg, errorG_GAN.avg, errorG_R.avg * 0.7 * args.lamb, errorG_L1_lab * 0.3 * args.lamb, errorG_R.avg,
+                errorG_basic.avg, errorG_GAN.avg, errorG_R.avg * 0.7 * args.lamb, errorG_L1_lab.avg * 0.3 * args.lamb, errorG_R.avg,
                 D_x, D_G_x1, D_G_x2
                 ))
             # plot image
