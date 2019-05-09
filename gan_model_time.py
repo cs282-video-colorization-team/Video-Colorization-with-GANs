@@ -81,7 +81,7 @@ class GANLoss(nn.Module):
 
 class ConvGenTime(nn.Module):
     '''Generator'''
-    def __init__(self, ngf=32):
+    def __init__(self, ngf=64):
         super(ConvGenTime, self).__init__()
 
         self.conv1 = nn.Conv2d(1, ngf, 3, stride=2, padding=1, bias=False) # ngf = 64
@@ -200,7 +200,7 @@ class ConvGenTime(nn.Module):
         h_prev = self.bn5(h_prev)
         h_prev = self.relu5(h_prev) # >>>>> Bottleneck
 
-        h_prev =self.conv1x1prev(h_prev) # 1x1conv
+        h_prev = self.conv1x1prev(h_prev) # 1x1conv
 
         # ========================
         # Step 2    -END- prev branch 
@@ -231,7 +231,7 @@ class ConvGenTime(nn.Module):
         h_next = self.bn5(h_next)
         h_next = self.relu5(h_next) # >>>>> Bottleneck
 
-        h_next =self.conv1x1next(h_next) # 1x1conv
+        h_next = self.conv1x1next(h_next) # 1x1conv
 
         # ========================
         # Step 3    -END- next branch 
@@ -300,7 +300,7 @@ class ConvGenTime(nn.Module):
 
 class PatchDis(nn.Module):
     '''Discriminator'''
-    def __init__(self, large=False, ndf=32):
+    def __init__(self, large=False, ndf=64):
         super(PatchDis, self).__init__()
 
         def init_conv(insize, outsize, kernel_size, stride, padding, bias=True):
@@ -309,26 +309,26 @@ class PatchDis(nn.Module):
             m.weight.data.normal_(0, math.sqrt(2. / n))
             return m
 
-        self.conv1 = SpectralNorm(init_conv(ndf*8, 1, kernel_size=4, stride=1, padding=1))
-
-        self.conv1 = SpectralNorm(init_conv(3, ndf, kernel_size=4, stride=2, padding=1))
+        self.conv1 = SpectralNorm(init_conv(3, ndf, kernel_size=4, stride=2, padding=1)) # 64
         self.relu1 = nn.LeakyReLU(0.01, inplace=True)
 
-        self.conv2 = SpectralNorm(init_conv(ndf, ndf*2, kernel_size=4, stride=2, padding=1))
+        self.conv2 = SpectralNorm(init_conv(ndf, ndf*2, kernel_size=4, stride=2, padding=1)) # 128
         self.relu2 = nn.LeakyReLU(0.01, inplace=True)
 
-        self.conv3 = SpectralNorm(init_conv(ndf*2, ndf*4, kernel_size=4, stride=2, padding=1))
+        self.conv3 = SpectralNorm(init_conv(ndf*2, ndf*4, kernel_size=4, stride=2, padding=1)) # 256
         self.relu3 = nn.LeakyReLU(0.01, inplace=True)
 
-        self.conv4 = SpectralNorm(init_conv(ndf*4, ndf*8, kernel_size=4, stride=1, padding=1))
+        self.conv4 = SpectralNorm(init_conv(ndf*4, ndf*8, kernel_size=4, stride=1, padding=1)) # 512
         self.relu4 = nn.LeakyReLU(0.01, inplace=True)
 
-        self.conv5 = SpectralNorm(init_conv(ndf*8, 1, kernel_size=4, stride=1, padding=1, bias=False))
+        self.conv5 = SpectralNorm(init_conv(ndf*8, 1, kernel_size=4, stride=1, padding=1, bias=False)) # 1
+
+        self.attn1 = Self_Attn(ngf*4, 'relu')
+        self.attn2 = Self_Attn(ngf*8, 'relu')
         
     def forward(self, x):
         # h = self.main(x)
         # output = self.conv1(h)
-        h = self.conv1(x)
         h = self.conv1(x)
         h = self.relu1(h)
 
@@ -340,11 +340,15 @@ class PatchDis(nn.Module):
         h = self.conv3(h)
         h = self.relu3(h)
 
+        h, p1 = self.attn1(h)
+
         #h = self.conv4(h)
         h = self.conv4(h)
         h = self.relu4(h)
 
+        h, p2 = self.attn2(h)
+
         #h = self.conv5(h)
         h = self.conv5(h)
 
-        return h.squeeze()
+        return h.squeeze(), p1, p2
