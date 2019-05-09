@@ -105,32 +105,35 @@ class ConvGenTime(nn.Module):
         self.relu5 = nn.LeakyReLU(0.1)
 
         # === 1x1 cov for prev, now, next
-        self.conv1x1prev = nn.Conv2d(ngf*8, ngf, 1, stride=1, padding=0, bias=False)
+        self.conv1x1prev = nn.Conv2d(ngf*8, ngf, 1, stride=1, padding=0, bias=False)  # 512
         self.conv1x1now = nn.Conv2d(ngf*8, ngf*6, 1, stride=1, padding=0, bias=False)
         self.conv1x1next = nn.Conv2d(ngf*8, ngf, 1, stride=1, padding=0, bias=False)
         self.bn1x1 = nn.InstanceNorm2d(ngf*8, affine=True)
         self.relu1x1 = nn.LeakyReLU(0.1)
         # ===
 
-        self.deconv6 = nn.ConvTranspose2d(ngf*8, ngf*8, 3, stride=2, padding=1, output_padding=1, bias=False)
+        self.deconv6 = nn.ConvTranspose2d(ngf*8, ngf*8, 3, stride=2, padding=1, output_padding=1, bias=False) # 512
         self.bn6 = nn.InstanceNorm2d(ngf*8, affine=True)
         self.relu6 = nn.ReLU()
 
-        self.deconv7 = nn.ConvTranspose2d(ngf*8, ngf*4, 3, stride=2, padding=1, output_padding=1, bias=False)
+        self.deconv7 = nn.ConvTranspose2d(ngf*8, ngf*4, 3, stride=2, padding=1, output_padding=1, bias=False) # 256
         self.bn7 = nn.InstanceNorm2d(ngf*4, affine=True)
         self.relu7 = nn.ReLU()
 
-        self.deconv8 = nn.ConvTranspose2d(ngf*4, ngf*2, 3, stride=2, padding=1, output_padding=1, bias=False)
+        self.deconv8 = nn.ConvTranspose2d(ngf*4, ngf*2, 3, stride=2, padding=1, output_padding=1, bias=False) # 128
         self.bn8 = nn.InstanceNorm2d(ngf*2, affine=True)
         self.relu8 = nn.ReLU()
 
-        self.deconv9 = nn.ConvTranspose2d(ngf*2, ngf, 3, stride=2, padding=1, output_padding=1, bias=False)
+        self.deconv9 = nn.ConvTranspose2d(ngf*2, ngf, 3, stride=2, padding=1, output_padding=1, bias=False) # 64
         self.bn9 = nn.InstanceNorm2d(ngf, affine=True)
         self.relu9 = nn.ReLU()
 
         self.deconvRGB = nn.ConvTranspose2d(ngf, 3, 3, stride=2, padding=1, output_padding=1, bias=False)
 
         self.deconvLAB = nn.ConvTranspose2d(ngf, 3, 3, stride=2, padding=1, output_padding=1, bias=False)
+
+        self.attn1 = Self_Attn(ngf*4, 'relu')
+        self.attn2 = Self_Attn(ngf*2, 'relu')
 
         self._initialize_weights()
 
@@ -259,6 +262,8 @@ class ConvGenTime(nn.Module):
         h = self.relu7(h) # 256,28,28
         h += pool3
 
+        h, p1 = self.attn1(h)
+
         h = self.deconv8(h)
         h = self.bn8(h)
         h = self.relu8(h) # 128,56,56
@@ -268,6 +273,8 @@ class ConvGenTime(nn.Module):
         h = self.bn9(h)
         h = self.relu9(h) # 64,112,112
         h += pool1
+
+        h, p2 = self.attn2(h)
 
         rgb = self.deconvRGB(h)
         rgb = F.tanh(rgb) # 3,224,224
@@ -279,7 +286,7 @@ class ConvGenTime(nn.Module):
         # Step 4  -END- UNET decoder
         # =========================
 
-        return rgb#, lab
+        return rgb, p1, p2#, lab
 
     def _initialize_weights(self):
         for m in self.modules():
