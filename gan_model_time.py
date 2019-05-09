@@ -6,6 +6,42 @@ from spectral_norm import SpectralNorm
 import numpy as np
 from torch.autograd import Variable
 
+class Self_Attn(nn.Module):
+    """ Self Attention Layer"""
+    def __init__(self, in_dim, activation):
+        super(Self_Attn, self).__init__()
+        self.chanel_in = in_dim
+        self.activation = activation
+
+        self.query_conv = nn.Conv2d(in_channels=in_dim, out_channels=in_dim//8, kernel_size=1)
+        self.key_conv = nn.Conv2d(in_channels=in_dim, out_channels=in_dim//8, kernel_size=1)
+        self.value_conv = nn.Conv2d(in_channels=in_dim, out_channels=in_dim, kernel_size=1)
+        self.gamma = nn.Parameter(torch.zeros(1))
+
+        self.softmax = nn.Softmax(dim=-1) 
+
+    def forward(self, x):
+        """
+            inputs:
+                x: input feature maps(N, C, H, W)
+            returns:
+                out: self attention value + input feature
+                attention: (C, W*H, W*H)
+        """
+        N, C, H, W = x.size()
+        proj_query = self.query_conv(x).view(N, -1, H*W).permute(0, 2, 1) # (N, H*W, C)
+        proj_key = self.key_conv(x).view(N, -1, H*W) # (N, C, H*W)
+        energy = torch.bmm(proj_query, proj_key)
+        attention = self.softmax(energy)
+        proj_value = self.value_conv(x).view(N, -1, H*W) # (N, C, H*W)
+
+        out = torch.bmm(proj_value, attention.permute(0, 2, 1))
+        out = out.view(N, C, H, W)
+
+        out = self.gamma * out + x
+        return out, attention
+
+
 class GANLoss(nn.Module):
     def __init__(self, use_lsgan=True, target_real_label=1.0, target_fake_label=0.0,
                  tensor=torch.FloatTensor):
@@ -48,23 +84,23 @@ class ConvGenTime(nn.Module):
     def __init__(self, ngf=32):
         super(ConvGenTime, self).__init__()
 
-        self.conv1 = nn.Conv2d(1, ngf, 3, stride=2, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(1, ngf, 3, stride=2, padding=1, bias=False) # ngf = 64
         self.bn1 = nn.InstanceNorm2d(ngf, affine=True)
         self.relu1 = nn.LeakyReLU(0.1)
 
-        self.conv2 = nn.Conv2d(ngf, ngf*2, 3, stride=2, padding=1, bias=False)
+        self.conv2 = nn.Conv2d(ngf, ngf*2, 3, stride=2, padding=1, bias=False) # 128
         self.bn2 = nn.InstanceNorm2d(ngf*2, affine=True)
         self.relu2 = nn.LeakyReLU(0.1)
 
-        self.conv3 = nn.Conv2d(ngf*2, ngf*4, 3, stride=2, padding=1, bias=False)
+        self.conv3 = nn.Conv2d(ngf*2, ngf*4, 3, stride=2, padding=1, bias=False) # 256
         self.bn3 = nn.InstanceNorm2d(ngf*4, affine=True)
         self.relu3 = nn.LeakyReLU(0.1)
 
-        self.conv4 = nn.Conv2d(ngf*4, ngf*8, 3, stride=2, padding=1, bias=False)
+        self.conv4 = nn.Conv2d(ngf*4, ngf*8, 3, stride=2, padding=1, bias=False) # 512
         self.bn4 = nn.InstanceNorm2d(ngf*8, affine=True)
         self.relu4 = nn.LeakyReLU(0.1)
 
-        self.conv5 = nn.Conv2d(ngf*8, ngf*8, 3, stride=2, padding=1, bias=False)
+        self.conv5 = nn.Conv2d(ngf*8, ngf*8, 3, stride=2, padding=1, bias=False) # 512
         self.bn5 = nn.InstanceNorm2d(ngf*8, affine=True)
         self.relu5 = nn.LeakyReLU(0.1)
 
