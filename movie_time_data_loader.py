@@ -13,9 +13,9 @@ class MovieTime(Dataset):
         self.transform_color = transform_color
         self.transform_gray = transform_gray
         if large:
-            self.IMAGE_SIZE = (480, 480)
+            self.IMAGE_RESIZE = (480, 480)
         else:
-            self.IMAGE_SIZE = (224, 224)
+            self.IMAGE_RESIZE = (224, 224)
         # self.IMAGE_RESIZE = (480, 480)
         self.mode = mode
         self.start_index = start_index
@@ -64,7 +64,7 @@ class MovieTime(Dataset):
     def __len__(self):
         return len(self.data_files_name)
 
-def get_movie_time_loader(image_path, batch_size=16, mode='train', start_index = 1, num_workers=1, shuffle=True):
+def get_movie_time_loader(image_path, batch_size=16, large=True, mode='train', start_index = 1, num_workers=1, shuffle=True):
 
     transform_gray = []
     transform_gray.append(transforms.Grayscale())
@@ -80,7 +80,7 @@ def get_movie_time_loader(image_path, batch_size=16, mode='train', start_index =
     else:
         transform_color = None
 
-    dataset = MovieTime(image_path, transform_color, transform_gray, mode, start_index)
+    dataset = MovieTime(image_path, large, transform_color, transform_gray, mode, start_index)
 
     data_loader = data.DataLoader(dataset=dataset,
                                   batch_size=batch_size,
