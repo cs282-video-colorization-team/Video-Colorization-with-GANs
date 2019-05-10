@@ -126,7 +126,7 @@ def main():
 
     train_loader = get_movie_time_loader(os.path.join(data_root, 'train/'),
                              batch_size=args.batch_size,
-                             large=args.large
+                             large=args.large,
                              mode='train',
                              start_index = 1,
                              num_workers=4,
@@ -135,7 +135,7 @@ def main():
 
     val_loader = get_movie_time_loader(os.path.join(data_root, 'val/'),
                             batch_size=args.batch_size,
-                            large=args.large
+                            large=args.large,
                             mode='val',
                             start_index = 10000,
                             num_workers=4,
