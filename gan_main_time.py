@@ -284,9 +284,9 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
         if (i % args.numD) == 0:
             #labelv = Variable(label.fill_(real_label))
             #fake, fake_lab = model_G(_now, _prev, _next)
-            fake = model_G(_now, _prev, _next)
+            fake, gf1, gf2 = model_G(_now, _prev, _next)
             model_G.zero_grad()
-            output = model_D(fake)
+            output, df1, df2 = model_D(fake)
             #errG_GAN = criterion(torch.squeeze(output), labelv)
             errG_GAN = criterionGAN(output, True)
             errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
@@ -360,7 +360,7 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
             # D network
             ########################
             # validate with real
-            output = model_D(target)
+            output, dr1, dr2 = model_D(target)
             #label = torch.FloatTensor(target.size(0)).fill_(real_label).cuda()
             #labelv = Variable(label)
             
@@ -368,9 +368,9 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
 
             # validate with fake
             #fake, fake_lab =  model_G(_now, _prev, _next)
-            fake =  model_G(_now, _prev, _next)
+            fake, gf1, gf2 = model_G(_now, _prev, _next)
             #labelv = Variable(label.fill_(fake_label))
-            output = model_D(fake.detach())
+            output, df1, df2 = model_D(fake.detach())
             errD_fake = criterionGAN(output, False)
 
             errD = errD_real + errD_fake
@@ -379,7 +379,7 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
             # G network
             ########################
             #labelv = Variable(label.fill_(real_label))
-            output = model_D(fake)
+            output, df1, df2 = model_D(fake)
             errG_GAN = criterionGAN(output, True)
             errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
             #errG_L1_lab = L1(fake_lab.view(fake_lab.size(0),-1), target_lab.view(target_lab.size(0),-1))
