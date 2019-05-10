@@ -323,8 +323,8 @@ class PatchDis(nn.Module):
 
         self.conv5 = SpectralNorm(init_conv(ndf*8, 1, kernel_size=4, stride=1, padding=1, bias=False)) # 1
 
-        self.attn1 = Self_Attn(ngf*4, 'relu')
-        self.attn2 = Self_Attn(ngf*8, 'relu')
+        self.attn1 = Self_Attn(ndf*4, 'relu')
+        self.attn2 = Self_Attn(ndf*8, 'relu')
         
     def forward(self, x):
         # h = self.main(x)
