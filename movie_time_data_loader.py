@@ -8,11 +8,15 @@ from PIL import Image
 import numpy as np
 
 class MovieTime(Dataset):
-    def __init__(self, image_path, transform_color, transform_gray, mode, start_index):
+    def __init__(self, image_path, large, transform_color, transform_gray, mode, start_index):
         self.image_path = image_path
         self.transform_color = transform_color
         self.transform_gray = transform_gray
-        self.IMAGE_RESIZE = (480, 480)
+        if large:
+            self.IMAGE_SIZE = (480, 480)
+        else:
+            self.IMAGE_SIZE = (224, 224)
+        # self.IMAGE_RESIZE = (480, 480)
         self.mode = mode
         self.start_index = start_index
 

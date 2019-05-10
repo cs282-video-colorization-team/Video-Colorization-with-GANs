@@ -169,7 +169,7 @@ class ConvGenTime(nn.Module):
         h_now = self.bn5(h_now)
         h_now = self.relu5(h_now) # >>>>> Bottleneck
 
-        h_now =self.conv1x1now(h_now) # 1x1conv
+        h_now = self.conv1x1now(h_now) # 1x1conv
 
         # ==========================
         # Step 1    -END- now branch 
