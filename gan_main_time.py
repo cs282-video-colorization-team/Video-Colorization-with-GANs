@@ -254,8 +254,9 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
         ########################
         # train with real
         if (i % args.numG) == 0:
+            # dr1, dr2, df1, df2, gf1, gf2 are attention scores
             model_D.zero_grad()
-            output = model_D(target)
+            output, dr1, dr2 = model_D(target)
             #label = torch.FloatTensor(target.size(0)).fill_(real_label).cuda()
             #labelv = Variable(label)
             #errD_real = criterion(torch.squeeze(output), labelv)
@@ -265,9 +266,9 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
 
             # train with fake
             #fake, _ =  model_G(_now, _prev, _next)
-            fake =  model_G(_now, _prev, _next)
+            fake, gf1, gf2 = model_G(_now, _prev, _next)
             #labelv = Variable(label.fill_(fake_label))
-            output = model_D(fake.detach())
+            output, df1, df2 = model_D(fake.detach())
             #errD_fake = criterion(torch.squeeze(output), labelv)
             errD_fake = criterionGAN(output, False)
             errD_fake.backward()
