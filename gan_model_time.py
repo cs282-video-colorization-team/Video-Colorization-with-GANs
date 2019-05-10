@@ -132,8 +132,8 @@ class ConvGenTime(nn.Module):
 
         self.deconvLAB = nn.ConvTranspose2d(ngf, 3, 3, stride=2, padding=1, output_padding=1, bias=False)
 
-        self.attn1 = Self_Attn(ngf*4, 'relu')
-        self.attn2 = Self_Attn(ngf*2, 'relu')
+        self.attn1 = Self_Attn(ngf*2, 'relu')
+        self.attn2 = Self_Attn(ngf, 'relu')
 
         self._initialize_weights()
 
@@ -262,12 +262,12 @@ class ConvGenTime(nn.Module):
         h = self.relu7(h) # 256,28,28
         h += pool3
 
-        h, p1 = self.attn1(h)
-
         h = self.deconv8(h)
         h = self.bn8(h)
         h = self.relu8(h) # 128,56,56
         h += pool2
+
+        h, p1 = self.attn1(h)
 
         h = self.deconv9(h)
         h = self.bn9(h)
