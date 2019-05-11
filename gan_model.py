@@ -358,6 +358,7 @@ class ConvDis(nn.Module):
 
         self.attn1 = Self_Attn(ndf*8, 'relu')
         self.attn2 = Self_Attn(ndf*8, 'relu')
+        self.use_self_attn = use_self_attn
 
         self._initialize_weights()
 
@@ -383,14 +384,14 @@ class ConvDis(nn.Module):
         h = self.bn5(h)
         h = self.relu5(h)
 
-        if use_self_attn:
+        if self.use_self_attn:
             h, p1 = self.attn1(h)
 
         h = self.conv6(h)
         h = self.bn6(h)
         h = self.relu6(h) # 512,1,1
 
-        if use_self_attn:
+        if self.use_self_attn:
             h, p2 = self.attn2(h)
 
         h = self.conv7(h)

@@ -135,6 +135,8 @@ class ConvGenTime(nn.Module):
         self.attn1 = Self_Attn(ngf*2, 'relu')
         self.attn2 = Self_Attn(ngf, 'relu')
 
+        self.use_self_attn = use_self_attn
+
         self._initialize_weights()
 
     def forward(self, _now, _prev, _next):
@@ -266,14 +268,14 @@ class ConvGenTime(nn.Module):
         h = self.bn8(h)
         h = self.relu8(h) # 128,56,56
         h += pool2
-        if use_self_attn:
+        if self.use_self_attn:
             h, p1 = self.attn1(h)
 
         h = self.deconv9(h)
         h = self.bn9(h)
         h = self.relu9(h) # 64,112,112
         h += pool1
-        if use_self_attn:
+        if self.use_self_attn:
             h, p2 = self.attn2(h)
 
         rgb = self.deconvRGB(h)
@@ -339,13 +341,13 @@ class PatchDis(nn.Module):
         #h = self.conv3(h)
         h = self.conv3(h)
         h = self.relu3(h)
-        if use_self_attn:
+        if self.use_self_attn:
             h, p1 = self.attn1(h)
 
         #h = self.conv4(h)
         h = self.conv4(h)
         h = self.relu4(h)
-        if use_self_attn:
+        if self.use_self_attn:
             h, p2 = self.attn2(h)
 
         #h = self.conv5(h)
