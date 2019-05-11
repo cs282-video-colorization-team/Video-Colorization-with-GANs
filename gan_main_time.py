@@ -59,7 +59,7 @@ parser.add_argument('--numG', default=1, type=int, help='G trains numG times whe
 parser.add_argument('--numD', default=1, type=int, help='D trains numD times when G trains per time')
 parser.add_argument('--patchGAN', action='store_true', help='Use patchGAN in Discriminator')
 parser.add_argument('--use_lsgan', action='store_true', help='Use LSGAN in loss criterion')
-
+parser.add_argument('--use_self_attn', action='store_true', help='Use self attention in both G and D')
 
 # parser.add_argument('-p', '--plot', action="store_true",
 #                     help='Plot accuracy and loss diagram?')
@@ -76,11 +76,11 @@ def main():
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
-    model_G = ConvGenTime(args.ngf)
+    model_G = ConvGenTime(args.ngf, args.use_self_attn)
     if args.patchGAN:
-        model_D = PatchDis(large=args.large, ndf=args.ndf)
+        model_D = PatchDis(large=args.large, ndf=args.ndf, use_self_attn=args.use_self_attn)
     else:
-        model_D = ConvDis(large=args.large, ndf=args.ndf)
+        model_D = ConvDis(large=args.large, ndf=args.ndf, use_self_attn=args.use_self_attn)
 
     start_epoch_G = start_epoch_D = 0
     if args.model_G:
@@ -258,7 +258,7 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
         if (i % args.numG) == 0:
             # dr1, dr2, df1, df2, gf1, gf2 are attention scores
             model_D.zero_grad()
-            output, dr1, dr2 = model_D(target)
+            output = model_D(target)
             #label = torch.FloatTensor(target.size(0)).fill_(real_label).cuda()
             #labelv = Variable(label)
             #errD_real = criterion(torch.squeeze(output), labelv)
@@ -268,9 +268,9 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
 
             # train with fake
             #fake, _ =  model_G(_now, _prev, _next)
-            fake, gf1, gf2 = model_G(_now, _prev, _next)
+            fake = model_G(_now, _prev, _next)
             #labelv = Variable(label.fill_(fake_label))
-            output, df1, df2 = model_D(fake.detach())
+            output = model_D(fake.detach())
             #errD_fake = criterion(torch.squeeze(output), labelv)
             errD_fake = criterionGAN(output, False)
             errD_fake.backward()
@@ -286,9 +286,9 @@ def train(train_loader, model_G, model_D, optimizer_G, optimizer_D, epoch, itera
         if (i % args.numD) == 0:
             #labelv = Variable(label.fill_(real_label))
             #fake, fake_lab = model_G(_now, _prev, _next)
-            fake, gf1, gf2 = model_G(_now, _prev, _next)
+            fake = model_G(_now, _prev, _next)
             model_G.zero_grad()
-            output, df1, df2 = model_D(fake)
+            output = model_D(fake)
             #errG_GAN = criterion(torch.squeeze(output), labelv)
             errG_GAN = criterionGAN(output, True)
             errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
@@ -362,7 +362,7 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
             # D network
             ########################
             # validate with real
-            output, dr1, dr2 = model_D(target)
+            output = model_D(target)
             #label = torch.FloatTensor(target.size(0)).fill_(real_label).cuda()
             #labelv = Variable(label)
             
@@ -370,9 +370,9 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
 
             # validate with fake
             #fake, fake_lab =  model_G(_now, _prev, _next)
-            fake, gf1, gf2 = model_G(_now, _prev, _next)
+            fake = model_G(_now, _prev, _next)
             #labelv = Variable(label.fill_(fake_label))
-            output, df1, df2 = model_D(fake.detach())
+            output = model_D(fake.detach())
             errD_fake = criterionGAN(output, False)
 
             errD = errD_real + errD_fake
@@ -381,7 +381,7 @@ def validate(val_loader, model_G, model_D, optimizer_G, optimizer_D, epoch):
             # G network
             ########################
             #labelv = Variable(label.fill_(real_label))
-            output, df1, df2 = model_D(fake)
+            output = model_D(fake)
             errG_GAN = criterionGAN(output, True)
             errG_L1 = L1(fake.view(fake.size(0),-1), target.view(target.size(0),-1))
             #errG_L1_lab = L1(fake_lab.view(fake_lab.size(0),-1), target_lab.view(target_lab.size(0),-1))

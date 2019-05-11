@@ -2,6 +2,7 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from gan_model_time import Self_Attn
 
 
 class ConvGen(nn.Module):
@@ -323,7 +324,7 @@ class ConvGenTime(nn.Module):
 
 class ConvDis(nn.Module):
     '''Discriminator'''
-    def __init__(self, large=False, ndf=32):
+    def __init__(self, large=False, ndf=32, use_self_attn=False):
         super(ConvDis, self).__init__()
 
         self.conv1 = nn.Conv2d(3, ndf, 3, stride=2, padding=1, bias=False)
@@ -355,6 +356,9 @@ class ConvDis(nn.Module):
 
         self.conv7 = nn.Conv2d(ndf*8, 1, 1, stride=1, padding=0, bias=False)
 
+        self.attn1 = Self_Attn(ndf*8, 'relu')
+        self.attn2 = Self_Attn(ndf*8, 'relu')
+
         self._initialize_weights()
 
     def forward(self, x):
@@ -379,14 +383,20 @@ class ConvDis(nn.Module):
         h = self.bn5(h)
         h = self.relu5(h)
 
+        if use_self_attn:
+            h, p1 = self.attn1(h)
+
         h = self.conv6(h)
         h = self.bn6(h)
         h = self.relu6(h) # 512,1,1
 
+        if use_self_attn:
+            h, p2 = self.attn2(h)
+
         h = self.conv7(h)
         h = F.sigmoid(h)
 
-        return h
+        return h #, p1, p2
 
     def _initialize_weights(self):
         for m in self.modules():

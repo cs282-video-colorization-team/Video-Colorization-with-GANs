@@ -81,7 +81,7 @@ class GANLoss(nn.Module):
 
 class ConvGenTime(nn.Module):
     '''Generator'''
-    def __init__(self, ngf=64):
+    def __init__(self, ngf=64, use_self_attn=False):
         super(ConvGenTime, self).__init__()
 
         self.conv1 = nn.Conv2d(1, ngf, 3, stride=2, padding=1, bias=False) # ngf = 64
@@ -266,15 +266,15 @@ class ConvGenTime(nn.Module):
         h = self.bn8(h)
         h = self.relu8(h) # 128,56,56
         h += pool2
-
-        h, p1 = self.attn1(h)
+        if use_self_attn:
+            h, p1 = self.attn1(h)
 
         h = self.deconv9(h)
         h = self.bn9(h)
         h = self.relu9(h) # 64,112,112
         h += pool1
-
-        h, p2 = self.attn2(h)
+        if use_self_attn:
+            h, p2 = self.attn2(h)
 
         rgb = self.deconvRGB(h)
         rgb = F.tanh(rgb) # 3,224,224
@@ -285,8 +285,8 @@ class ConvGenTime(nn.Module):
         # =========================
         # Step 4  -END- UNET decoder
         # =========================
-
-        return rgb, p1, p2#, lab
+        # return p1, p2 for visualization 
+        return rgb#, p1, p2#, lab
 
     def _initialize_weights(self):
         for m in self.modules():
@@ -300,7 +300,7 @@ class ConvGenTime(nn.Module):
 
 class PatchDis(nn.Module):
     '''Discriminator'''
-    def __init__(self, large=False, ndf=64):
+    def __init__(self, large=False, ndf=64, use_self_attn=False):
         super(PatchDis, self).__init__()
 
         def init_conv(insize, outsize, kernel_size, stride, padding, bias=True):
@@ -339,16 +339,17 @@ class PatchDis(nn.Module):
         #h = self.conv3(h)
         h = self.conv3(h)
         h = self.relu3(h)
-
-        h, p1 = self.attn1(h)
+        if use_self_attn:
+            h, p1 = self.attn1(h)
 
         #h = self.conv4(h)
         h = self.conv4(h)
         h = self.relu4(h)
-
-        h, p2 = self.attn2(h)
+        if use_self_attn:
+            h, p2 = self.attn2(h)
 
         #h = self.conv5(h)
         h = self.conv5(h)
 
-        return h.squeeze(), p1, p2
+        # return p1, p2 for visualization 
+        return h.squeeze()#, p1, p2
