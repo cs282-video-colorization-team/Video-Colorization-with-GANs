@@ -421,8 +421,8 @@ def vis_result(data, target, output, epoch, mode='val'):
         grey = np.transpose(grey, (1,2,0))
         grey = np.repeat(grey, 3, axis=2).astype(np.float64)
         img_list.append(np.concatenate((grey, raw_rgb, pred_rgb), 1))
-
-    img_list = [np.concatenate(img_list[4*i:4*(i+1)], axis=1) for i in range(len(img_list) // 4)]
+    display_len = 4 if len(img_list) >= 4 else 2
+    img_list = [np.concatenate(img_list[display_len*i:display_len*(i+1)], axis=1) for i in range(len(img_list) // display_len)]
     img_list = np.concatenate(img_list, axis=0)
 
     if mode=='val':
