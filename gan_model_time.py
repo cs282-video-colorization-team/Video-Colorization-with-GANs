@@ -327,6 +327,7 @@ class PatchDis(nn.Module):
 
         self.attn1 = Self_Attn(ndf*4, 'relu')
         self.attn2 = Self_Attn(ndf*8, 'relu')
+        self.use_self_attn = use_self_attn
         
     def forward(self, x):
         # h = self.main(x)
