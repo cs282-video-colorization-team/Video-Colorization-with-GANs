@@ -18,11 +18,11 @@ Each block contains Conv(transpose Conv) layer, BatchNormalization and Leaky ReL
 
 Therefore, the adversarial loss function is given by:
 
-<img src="asset/adv_loss.png" width="40%" height="40%">
+<img src="asset/adv_loss.png" width="90%" height="90%">
 
 Meanwhile, the pixel-level loss is an average of RGB channels, which is given by:
 
-<img src="asset/pixed_loss.png" width="40%" height="40%">
+<img src="asset/pixel_loss.png" width="40%" height="40%">
 
 The relative weight between adversarial loss and pixel-level loss is balanced by hyper-parameters, which is given by:
 
@@ -70,7 +70,7 @@ We compare our results with baseline models in 2 ways -- individual frame qualit
 
 ![JE_indv](asset/individual_JaneEyre.png)
 
-Zootopia with 480x480 image size:
+*Zootopia* with 480x480 image size:
 
 ![zoo_indv](asset/individual_Zootopia.png)
 
@@ -80,7 +80,7 @@ Zootopia with 480x480 image size:
 
 ![JE_indv](asset/continuous_JaneEyre.png)
 
-Zootopia with 480x480 image size:
+*Zootopia* with 480x480 image size:
 
 ![zoo_indv](asset/continuous_Zootopia.png)
 
