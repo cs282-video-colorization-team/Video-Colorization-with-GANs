@@ -84,7 +84,7 @@ We compare our results with baseline models in 2 ways -- individual frame qualit
 
 ![zoo_indv](asset/continuous_Zootopia.png)
 
-
+![img](asset/ZootopiaDemo_gen.gif)
 
 ## Reference
 
