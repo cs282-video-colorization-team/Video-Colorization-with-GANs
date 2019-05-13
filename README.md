@@ -56,7 +56,7 @@ Image samples created during validation will be saved in `img/`, and the model w
 
 * Example command to test Zootopia dataset:
 
-`python output.py --path data_path --savepath output_time/ --modelpath model_path --time 'time'`
+`python output.py --path data_path/ --savepath output_time/ --modelpath model_path --time 'time'`
 
 to test the model with unseen images. Replace `data_path` by the path of the test set of Zootopia and replace `model_path` by the path of the model that was saved during the training process.
 
