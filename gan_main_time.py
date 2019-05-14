@@ -193,6 +193,7 @@ def main():
                              'ndf': args.ndf,
                              'numG': args.numG,
                              'numD': args.numD,
+                             'use_self_attn': args.use_self_attn,
                              },
                              filename=model_path+'G_epoch%d.pth.tar' \
                              % epoch)
@@ -208,6 +209,7 @@ def main():
                      'ndf': args.ndf,
                      'numG': args.numG,
                      'numD': args.numD,
+                     'use_self_attn': args.use_self_attn,
                      },
                      filename=model_path+'Last_G_epoch%d.pth.tar' \
                      % epoch)
@@ -222,6 +224,7 @@ def main():
                      'ndf': args.ndf,
                      'numG': args.numG,
                      'numD': args.numD,
+                     'use_self_attn': args.use_self_attn,
                      },
                      filename=model_path+'Last_D_epoch%d.pth.tar' \
                      % epoch)

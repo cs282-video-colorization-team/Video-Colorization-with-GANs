@@ -44,10 +44,11 @@ def main():
     checkpoint_G = torch.load(PATH)
     ngf = checkpoint_G['ngf']
     Large = checkpoint_G['Large']
+    use_self_attn = checkpoint_G['use_self_attn']
     if args.time=='baseline':
         model_G = ConvGen(ngf)
     else:
-        model_G = ConvGenTime(ngf)
+        model_G = ConvGenTime(ngf, use_self_attn)
     model_G.load_state_dict(checkpoint_G['state_dict'])
 
     model_G.eval()
@@ -55,14 +56,14 @@ def main():
     val_bs = checkpoint_G['batch_size']
 
     if args.time=='baseline':
-        val_loader = get_loader(ori_path,
+        test_loader = get_loader(ori_path,
             batch_size=val_bs,
             large=Large,
             mode='test',
             num_workers=4
             )
     else:
-        val_loader = get_movie_time_loader(ori_path,
+        test_loader = get_movie_time_loader(ori_path,
             batch_size=val_bs,
             mode='test',
             num_workers=4, 
@@ -71,7 +72,8 @@ def main():
         
     with torch.no_grad(): # Fuck torch.no_grad!! Gradient will accumalte if you don't set torch.no_grad()!!
         if args.time=='baseline':
-            for i, (data, filename) in enumerate(val_loader):
+            for i, (data, filename) in enumerate(test_loader):
+                print("Processing image", filename)
                 # print("filename:", filename)
                 # print("filename type:", type(filename))
                 data = Variable(data)
@@ -93,7 +95,8 @@ def main():
                     pred_rgb = (np.transpose(pred, (1,2,0)).astype(np.float64) + 1) / 2.
                     matplotlib.image.imsave(save_path + filename[j], pred_rgb)
         else:
-            for i, (_now, _prev, _next, filename) in enumerate(val_loader):
+            for i, (_now, _prev, _next, filename) in enumerate(test_loader):
+                print("Processing image", filename)
                 _now, _prev, _next = Variable(_now), Variable(_prev), Variable(_next)
 
                 # validate with fake
