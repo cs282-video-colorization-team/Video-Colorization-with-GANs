@@ -84,7 +84,10 @@ We compare our results with baseline models in 2 ways -- individual frame qualit
 
 ![zoo_indv](asset/continuous_Zootopia.png)
 
-![img](asset/ZootopiaDemo_gen.gif)
+
+Gray-scale             |  Our model             |  Original 
+:-------------------------:|:-------------------------:|:-------------------------:
+![img](asset/ZootopiaDemo_bw.gif)  |  ![img](asset/ZootopiaDemo_gen.gif)  |  ![img](asset/ZootopiaDemo_ori.gif)
 
 ## Reference
 
